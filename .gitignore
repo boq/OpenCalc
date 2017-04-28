@@ -1,0 +1,29 @@
+# Package Files
+!gradle/wrapper/gradle-wrapper.jar
+*.jar
+
+# input
+data/
+
+# Gradle
+.gradle/
+build/
+run/
+bin/
+repo/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+*.iml
+*.iws
+*.ipr
+.idea/
+
+# OS Garbage
+.DS_Store
+Thumbs.db
+desktop.ini
