@@ -1,7 +1,7 @@
 package info.openmods.calc.parsing.ast;
 
 import com.google.common.collect.Maps;
-import info.openmods.calc.utils.CollectionUtils;
+import info.openmods.calc.utils.MiscUtils;
 import java.util.List;
 import java.util.Map;
 
@@ -53,12 +53,12 @@ public abstract class MappedParserState<N> implements IParserState<N> {
 	protected abstract IModifierStateTransition<N> createDefaultModifierStateTransition(String modifier);
 
 	public MappedParserState<N> addStateTransition(String symbol, ISymbolCallStateTransition<N> transition) {
-		CollectionUtils.putOnce(symbolTransitions, symbol, transition);
+		MiscUtils.putOnce(symbolTransitions, symbol, transition);
 		return this;
 	}
 
 	public MappedParserState<N> addStateTransition(String symbol, IModifierStateTransition<N> transition) {
-		CollectionUtils.putOnce(modifierTransitions, symbol, transition);
+		MiscUtils.putOnce(modifierTransitions, symbol, transition);
 		return this;
 	}
 }

@@ -10,7 +10,7 @@ import info.openmods.calc.math.Complex;
 import info.openmods.calc.parsing.StringEscaper;
 import info.openmods.calc.types.bigint.BigIntPrinter;
 import info.openmods.calc.types.fp.DoublePrinter;
-import info.openmods.calc.utils.config.Configurable;
+import info.openmods.calc.utils.config.ConfigProperty;
 import java.math.BigInteger;
 import java.util.Set;
 
@@ -18,28 +18,28 @@ public class TypedValuePrinter implements IValuePrinter<TypedValue> {
 
 	private static final Set<Character> UNESCAPED_CHARS = ImmutableSet.of('\'');
 
-	@Configurable
+	@ConfigProperty
 	public int base = 10;
 
-	@Configurable
+	@ConfigProperty
 	public boolean uniformBaseNotation = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean allowStandardPrinter = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean escapeStrings = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean numericBool = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean printTypes = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean printLists = true;
 
-	@Configurable
+	@ConfigProperty
 	public boolean printNilInLists = false;
 
 	private final PositionalNotationPrinter<Double> doublePrinter = new DoublePrinter.Helper(8);

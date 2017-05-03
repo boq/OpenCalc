@@ -2,13 +2,13 @@ package info.openmods.calc.utils.config;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import info.openmods.calc.utils.CachedFactory;
-import info.openmods.calc.utils.reflection.FieldAccess;
+import info.openmods.calc.utils.DefaultMap;
+import info.openmods.calc.utils.reflection.FieldWrapper;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Set;
 
-public class ConfigurableClassAdapter<T> {
+public class ConfigPropertyManager<T> {
 
 	public static class NoSuchPropertyException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
@@ -22,9 +22,9 @@ public class ConfigurableClassAdapter<T> {
 
 		private final IStringReader<T> serializer;
 
-		private final FieldAccess<T> access;
+		private final FieldWrapper<T> access;
 
-		public FieldAdapter(IStringReader<T> serializer, FieldAccess<T> access) {
+		public FieldAdapter(IStringReader<T> serializer, FieldWrapper<T> access) {
 			this.serializer = serializer;
 			this.access = access;
 		}
@@ -38,23 +38,31 @@ public class ConfigurableClassAdapter<T> {
 			T value = access.get(instance);
 			return String.valueOf(value);
 		}
+
+		public T getRaw(Object instance) {
+			return access.get(instance);
+		}
+
+		public void setRaw(Object instance, Object value) {
+			access.set(instance, access.getType().cast(value));
+		}
 	}
 
 	private final Class<? extends T> cls;
 
 	private final Map<String, FieldAdapter<?>> fields;
 
-	public ConfigurableClassAdapter(Class<? extends T> cls) {
+	public ConfigPropertyManager(Class<? extends T> cls) {
 		this.cls = cls;
 
 		ImmutableMap.Builder<String, FieldAdapter<?>> fields = ImmutableMap.builder();
 		for (Field f : cls.getFields()) {
-			Configurable ann = f.getAnnotation(Configurable.class);
+			ConfigProperty ann = f.getAnnotation(ConfigProperty.class);
 			if (ann != null) {
 				String name = ann.name();
 				if (name.isEmpty()) name = f.getName();
 
-				final FieldAccess<?> access = FieldAccess.create(f);
+				final FieldWrapper<?> access = FieldWrapper.create(f);
 				final IStringReader<?> serializer = StringReader.get(f.getType());
 				Preconditions.checkState(serializer != null, "Can't find serializer for field %s", f);
 
@@ -86,15 +94,23 @@ public class ConfigurableClassAdapter<T> {
 		findField(key).set(instance, value);
 	}
 
-	private static final CachedFactory<Class<?>, ConfigurableClassAdapter<?>> CACHE = new CachedFactory<Class<?>, ConfigurableClassAdapter<?>>() {
+	public Object getRaw(T instance, String key) {
+		return findField(key).getRaw(instance);
+	}
+
+	public void setRaw(T instance, String key, Object value) {
+		findField(key).setRaw(instance, value);
+	}
+
+	private static final DefaultMap<Class<?>, ConfigPropertyManager<?>> CACHE = new DefaultMap<Class<?>, ConfigPropertyManager<?>>() {
 		@Override
-		protected ConfigurableClassAdapter<?> create(Class<?> key) {
-			return new ConfigurableClassAdapter<Object>(key);
+		protected ConfigPropertyManager<?> create(Class<?> key) {
+			return new ConfigPropertyManager<Object>(key);
 		}
 	};
 
 	@SuppressWarnings("unchecked")
-	public static <T> ConfigurableClassAdapter<T> getFor(Class<? extends T> cls) {
-		return (ConfigurableClassAdapter<T>)CACHE.getOrCreate(cls);
+	public static <T> ConfigPropertyManager<T> getFor(Class<? extends T> cls) {
+		return (ConfigPropertyManager<T>)CACHE.getOrCreate(cls);
 	}
 }

@@ -13,11 +13,11 @@ import com.google.common.reflect.TypeToken;
 import info.openmods.calc.Frame;
 import info.openmods.calc.symbol.ICallable;
 import info.openmods.calc.utils.AnnotationMap;
-import info.openmods.calc.utils.CachedFactory;
+import info.openmods.calc.utils.DefaultMap;
 import info.openmods.calc.utils.OptionalInt;
 import info.openmods.calc.utils.Stack;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -122,7 +122,7 @@ public class TypedFunction {
 		public Class<?>[] extra() default {};
 	}
 
-	private static final CachedFactory<Method, TypeVariant> variantsCache = new CachedFactory<Method, TypeVariant>() {
+	private static final DefaultMap<Method, TypeVariant> variantsCache = new DefaultMap<Method, TypeVariant>() {
 		@Override
 		protected TypeVariant create(Method key) {
 			return createVariant(key);
@@ -138,7 +138,7 @@ public class TypedFunction {
 			}
 		});
 
-		private static final CachedFactory<Set<Method>, TypedFunctionBody> bodyCache = new CachedFactory<Set<Method>, TypedFunctionBody>() {
+		private static final DefaultMap<Set<Method>, TypedFunctionBody> bodyCache = new DefaultMap<Set<Method>, TypedFunctionBody>() {
 
 			@Override
 			protected TypedFunctionBody create(Set<Method> methods) {
@@ -292,7 +292,7 @@ public class TypedFunction {
 	}
 
 	static {
-		TypeVariableHolderHandler.instance.initialize(TypeVariableHolders.class);
+		TypeVariableHolderFiller.instance.initialize(TypeVariableHolders.class);
 	}
 
 	private static class MissingType {}

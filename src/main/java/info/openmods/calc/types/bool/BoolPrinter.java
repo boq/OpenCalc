@@ -1,11 +1,11 @@
 package info.openmods.calc.types.bool;
 
 import info.openmods.calc.IValuePrinter;
-import info.openmods.calc.utils.config.Configurable;
+import info.openmods.calc.utils.config.ConfigProperty;
 
 public class BoolPrinter implements IValuePrinter<Boolean> {
 
-	@Configurable
+	@ConfigProperty
 	public boolean numeric = false;
 
 	@Override

@@ -3,7 +3,7 @@ package info.openmods.calc.utils;
 import com.google.common.collect.Maps;
 import java.util.Map;
 
-public abstract class CachedFactory<K, V> {
+public abstract class DefaultMap<K, V> {
 
 	private final Map<K, V> cache = Maps.newHashMap();
 

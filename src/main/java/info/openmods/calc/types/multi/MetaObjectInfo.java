@@ -11,7 +11,7 @@ import info.openmods.calc.types.multi.MetaObject.Slot;
 import info.openmods.calc.types.multi.MetaObject.SlotAdapter;
 import info.openmods.calc.types.multi.MetaObject.SlotField;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
@@ -28,7 +28,7 @@ public class MetaObjectInfo {
 	}
 
 	static {
-		TypeVariableHolderHandler.instance.initialize(TypeVariableHolders.class);
+		TypeVariableHolderFiller.instance.initialize(TypeVariableHolders.class);
 	}
 
 	public static class SlotAccess {

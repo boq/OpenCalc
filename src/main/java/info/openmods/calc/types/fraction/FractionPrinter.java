@@ -1,15 +1,15 @@
 package info.openmods.calc.types.fraction;
 
 import info.openmods.calc.IValuePrinter;
-import info.openmods.calc.utils.config.Configurable;
+import info.openmods.calc.utils.config.ConfigProperty;
 import org.apache.commons.lang3.math.Fraction;
 
 public class FractionPrinter implements IValuePrinter<Fraction> {
 
-	@Configurable
+	@ConfigProperty
 	public boolean properFractions;
 
-	@Configurable
+	@ConfigProperty
 	public boolean expand;
 
 	@Override

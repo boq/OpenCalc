@@ -2,7 +2,7 @@ package info.openmods.calc;
 
 import info.openmods.calc.executable.IExecutable;
 import info.openmods.calc.symbol.CompiledFunction;
-import info.openmods.calc.utils.config.ConfigurableClassAdapter;
+import info.openmods.calc.utils.config.ConfigPropertyManager;
 import java.util.Set;
 
 public class Calculator<E, M> {
@@ -14,13 +14,13 @@ public class Calculator<E, M> {
 	public final IValuePrinter<E> printer;
 
 	@SuppressWarnings("rawtypes")
-	private final ConfigurableClassAdapter<IValuePrinter> printerConfig;
+	private final ConfigPropertyManager<IValuePrinter> printerConfig;
 
 	public Calculator(Environment<E> environment, Compilers<E, M> compilers, IValuePrinter<E> printer) {
 		this.environment = environment;
 		this.compilers = compilers;
 		this.printer = printer;
-		this.printerConfig = ConfigurableClassAdapter.getFor(printer.getClass());
+		this.printerConfig = ConfigPropertyManager.getFor(printer.getClass());
 	}
 
 	public Set<String> getProperties() {
@@ -31,8 +31,16 @@ public class Calculator<E, M> {
 		return printerConfig.get(printer, key);
 	}
 
+	public Object getPropertyRaw(String key) {
+		return printerConfig.getRaw(printer, key);
+	}
+
 	public void setProperty(String key, String value) {
 		printerConfig.set(printer, key, value);
+	}
+
+	public void setPropertyRaw(String key, Object value) {
+		printerConfig.setRaw(printer, key, value);
 	}
 
 	public void compileAndExecute(M exprType, String expr) {

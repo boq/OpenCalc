@@ -3,7 +3,7 @@ package info.openmods.calc.types.fp;
 import info.openmods.calc.IValuePrinter;
 import info.openmods.calc.PositionalNotationPrinter;
 import info.openmods.calc.PrinterUtils;
-import info.openmods.calc.utils.config.Configurable;
+import info.openmods.calc.utils.config.ConfigProperty;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class DoublePrinter implements IValuePrinter<Double> {
@@ -80,13 +80,13 @@ public class DoublePrinter implements IValuePrinter<Double> {
 
 	private final PositionalNotationPrinter<Double> printer = new Helper(8);
 
-	@Configurable
+	@ConfigProperty
 	public int base = 10;
 
-	@Configurable
+	@ConfigProperty
 	public boolean allowStandardPrinter = false;
 
-	@Configurable
+	@ConfigProperty
 	public boolean uniformBaseNotation = false;
 
 	@Override

@@ -11,7 +11,7 @@ import com.google.common.reflect.TypeToken;
 import info.openmods.calc.executable.BinaryOperator;
 import info.openmods.calc.types.multi.TypeDomain.Coercion;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
@@ -72,7 +72,7 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 		}
 
 		static {
-			TypeVariableHolderHandler.instance.initialize(TypeVariableHolders.class);
+			TypeVariableHolderFiller.instance.initialize(TypeVariableHolders.class);
 		}
 
 		private final String id;

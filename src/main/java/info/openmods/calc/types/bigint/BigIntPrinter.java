@@ -3,7 +3,7 @@ package info.openmods.calc.types.bigint;
 import info.openmods.calc.IValuePrinter;
 import info.openmods.calc.PositionalNotationPrinter;
 import info.openmods.calc.PrinterUtils;
-import info.openmods.calc.utils.config.Configurable;
+import info.openmods.calc.utils.config.ConfigProperty;
 import java.math.BigInteger;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -68,10 +68,10 @@ public class BigIntPrinter implements IValuePrinter<BigInteger> {
 
 	private final PositionalNotationPrinter<BigInteger> printer = new Helper(0);
 
-	@Configurable
+	@ConfigProperty
 	public int base = 10;
 
-	@Configurable
+	@ConfigProperty
 	public boolean uniformBaseNotation = false;
 
 	@Override

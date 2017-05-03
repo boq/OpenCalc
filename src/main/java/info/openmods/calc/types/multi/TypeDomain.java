@@ -8,7 +8,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
@@ -27,7 +27,7 @@ public class TypeDomain {
 	}
 
 	static {
-		TypeVariableHolderHandler.instance.initialize(TypeVariableHolders.class);
+		TypeVariableHolderFiller.instance.initialize(TypeVariableHolders.class);
 	}
 
 	private static class WrappedConverter<S, T> implements RawConverter {

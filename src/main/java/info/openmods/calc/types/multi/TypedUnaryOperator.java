@@ -7,7 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import info.openmods.calc.executable.UnaryOperator;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
@@ -42,7 +42,7 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 		}
 
 		static {
-			TypeVariableHolderHandler.instance.initialize(TypeVariableHolders.class);
+			TypeVariableHolderFiller.instance.initialize(TypeVariableHolders.class);
 		}
 
 		private final String id;

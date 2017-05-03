@@ -10,9 +10,9 @@ import com.google.common.collect.Multimap;
 import info.openmods.calc.Environment;
 import info.openmods.calc.Frame;
 import info.openmods.calc.types.multi.TypedFunction.IUnboundCallable;
-import info.openmods.calc.utils.CachedFactory;
+import info.openmods.calc.utils.DefaultMap;
 import info.openmods.calc.utils.OptionalInt;
-import info.openmods.calc.utils.reflection.FieldAccess;
+import info.openmods.calc.utils.reflection.FieldWrapper;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -56,7 +56,7 @@ public class StructWrapper {
 		return members.keySet();
 	}
 
-	private static final CachedFactory<Class<?>, Map<String, MemberValueProvider>> membersCache = new CachedFactory<Class<?>, Map<String, MemberValueProvider>>() {
+	private static final DefaultMap<Class<?>, Map<String, MemberValueProvider>> membersCache = new DefaultMap<Class<?>, Map<String, MemberValueProvider>>() {
 
 		@Override
 		protected Map<String, MemberValueProvider> create(Class<?> cls) {
@@ -154,14 +154,14 @@ public class StructWrapper {
 	}
 
 	private static void appendFieldMember(ImmutableMap.Builder<String, MemberValueProvider> members, Field f) {
-		final FieldAccess<?> field = FieldAccess.create(f);
+		final FieldWrapper<?> field = FieldWrapper.create(f);
 		members.put(f.getName(), new MemberValueProvider() {
 			@Override
 			public TypedValue getValue(TypeDomain domain, Object target) {
 				return wrapFieldValue(field, domain, target);
 			}
 
-			private <T> TypedValue wrapFieldValue(FieldAccess<T> field, TypeDomain domain, Object target) {
+			private <T> TypedValue wrapFieldValue(FieldWrapper<T> field, TypeDomain domain, Object target) {
 				final T value = field.get(target);
 				return domain.create(field.getType(), value);
 			}
@@ -170,7 +170,7 @@ public class StructWrapper {
 
 	private static void appendRawFieldMember(Builder<String, MemberValueProvider> members, Field f) {
 		Preconditions.checkState(f.getType() == TypedValue.class, "Invalid field %s type", f);
-		final FieldAccess<TypedValue> field = FieldAccess.create(f);
+		final FieldWrapper<TypedValue> field = FieldWrapper.create(f);
 		members.put(f.getName(), new MemberValueProvider() {
 			@Override
 			public TypedValue getValue(TypeDomain domain, Object target) {

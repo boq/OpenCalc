@@ -8,11 +8,11 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
-public class TypeVariableHolderHandler {
+public class TypeVariableHolderFiller {
 
-	private TypeVariableHolderHandler() {}
+	private TypeVariableHolderFiller() {}
 
-	public static final TypeVariableHolderHandler instance = new TypeVariableHolderHandler();
+	public static final TypeVariableHolderFiller instance = new TypeVariableHolderFiller();
 
 	public void initialize(Class<?> targetClass) {
 		final Map<Field, Class<?>> targetToSource = Maps.newHashMap();

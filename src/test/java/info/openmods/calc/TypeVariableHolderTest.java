@@ -1,7 +1,7 @@
 package info.openmods.calc;
 
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
-import info.openmods.calc.utils.reflection.TypeVariableHolderHandler;
+import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class TypeVariableHolderTest {
 
 	@Test
 	public void testClassLevelOwnParameters() {
-		TypeVariableHolderHandler.instance.initialize(ParamerizedHolderClassLevel.class);
+		TypeVariableHolderFiller.instance.initialize(ParamerizedHolderClassLevel.class);
 
 		final TypeVariable<?>[] parameters = ParamerizedHolderClassLevel.class.getTypeParameters();
 		Assert.assertEquals(parameters[0], ParamerizedHolderClassLevel.A);
@@ -45,7 +45,7 @@ public class TypeVariableHolderTest {
 
 	@Test
 	public void testVariableLevelOwnParameters() {
-		TypeVariableHolderHandler.instance.initialize(ParamerizedHolderVariableLevel.class);
+		TypeVariableHolderFiller.instance.initialize(ParamerizedHolderVariableLevel.class);
 
 		final TypeVariable<?>[] parameters = ParamerizedHolderVariableLevel.class.getTypeParameters();
 		Assert.assertEquals(parameters[0], ParamerizedHolderVariableLevel.A);
@@ -54,7 +54,7 @@ public class TypeVariableHolderTest {
 
 	@Test
 	public void testParametersFromExternalClass() {
-		TypeVariableHolderHandler.instance.initialize(ParHolder.class);
+		TypeVariableHolderFiller.instance.initialize(ParHolder.class);
 
 		final TypeVariable<?>[] parametersA = ParA.class.getTypeParameters();
 		final TypeVariable<?>[] parametersB = ParB.class.getTypeParameters();

@@ -7,7 +7,7 @@ import info.openmods.calc.executable.Operator;
 import info.openmods.calc.executable.UnaryOperator;
 import info.openmods.calc.parsing.IValueParser;
 import info.openmods.calc.parsing.token.TokenUtils;
-import info.openmods.calc.utils.CollectionUtils;
+import info.openmods.calc.utils.MiscUtils;
 import java.util.List;
 import java.util.Map;
 
@@ -59,12 +59,12 @@ public class MappedExprNodeFactory<E> extends DefaultExprNodeFactory<E> {
 	}
 
 	public MappedExprNodeFactory<E> addFactory(String openingBracket, IBracketExprNodeFactory<E> factory) {
-		CollectionUtils.putOnce(bracketFactories, openingBracket, factory);
+		MiscUtils.putOnce(bracketFactories, openingBracket, factory);
 		return this;
 	}
 
 	public MappedExprNodeFactory<E> addFactory(BinaryOperator<E> op, final IBinaryExprNodeFactory<E> factory) {
-		CollectionUtils.putOnce(opFactories, op, new IOpNodeFactory<E>() {
+		MiscUtils.putOnce(opFactories, op, new IOpNodeFactory<E>() {
 			@Override
 			public IExprNode<E> create(List<IExprNode<E>> children) {
 				Preconditions.checkArgument(children.size() == 2, "Expected 2 children, got %s", children);
@@ -75,7 +75,7 @@ public class MappedExprNodeFactory<E> extends DefaultExprNodeFactory<E> {
 	}
 
 	public MappedExprNodeFactory<E> addFactory(UnaryOperator<E> op, final IUnaryExprNodeFactory<E> factory) {
-		CollectionUtils.putOnce(opFactories, op, new IOpNodeFactory<E>() {
+		MiscUtils.putOnce(opFactories, op, new IOpNodeFactory<E>() {
 			@Override
 			public IExprNode<E> create(List<IExprNode<E>> children) {
 				Preconditions.checkArgument(children.size() == 1, "Expected one child, got %s", children);
