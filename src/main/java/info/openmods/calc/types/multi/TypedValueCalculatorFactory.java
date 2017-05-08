@@ -16,7 +16,6 @@ import info.openmods.calc.ExprType;
 import info.openmods.calc.Frame;
 import info.openmods.calc.FrameFactory;
 import info.openmods.calc.executable.BinaryOperator;
-import info.openmods.calc.executable.BinaryOperator.Associativity;
 import info.openmods.calc.executable.IExecutable;
 import info.openmods.calc.executable.Operator;
 import info.openmods.calc.executable.OperatorDictionary;
@@ -32,6 +31,7 @@ import info.openmods.calc.parsing.ast.IAstParser;
 import info.openmods.calc.parsing.ast.IModifierStateTransition;
 import info.openmods.calc.parsing.ast.IOperatorDictionary;
 import info.openmods.calc.parsing.ast.MappedParserState;
+import info.openmods.calc.parsing.ast.OperatorAssociativity;
 import info.openmods.calc.parsing.node.BinaryOpNode;
 import info.openmods.calc.parsing.node.DefaultExprNodeFactory;
 import info.openmods.calc.parsing.node.IExprNode;
@@ -142,7 +142,7 @@ public class TypedValueCalculatorFactory {
 			super(id, precendence);
 		}
 
-		public MarkerBinaryOperator(String id, int precedence, Associativity associativity) {
+		public MarkerBinaryOperator(String id, int precedence, OperatorAssociativity associativity) {
 			super(id, precedence, associativity);
 		}
 
@@ -1230,11 +1230,11 @@ public class TypedValueCalculatorFactory {
 			}
 		});
 
-		final BinaryOperator<TypedValue> lambdaOperator = operators.registerOperator(new MarkerBinaryOperator("->", PRIORITY_LAMBDA, Associativity.RIGHT)).unwrap();
+		final BinaryOperator<TypedValue> lambdaOperator = operators.registerOperator(new MarkerBinaryOperator("->", PRIORITY_LAMBDA, OperatorAssociativity.RIGHT)).unwrap();
 
-		final BinaryOperator<TypedValue> splitOperator = operators.registerOperator(new MarkerBinaryOperator("\\", PRIORITY_SPLIT, Associativity.RIGHT)).unwrap();
+		final BinaryOperator<TypedValue> splitOperator = operators.registerOperator(new MarkerBinaryOperator("\\", PRIORITY_SPLIT, OperatorAssociativity.RIGHT)).unwrap();
 
-		final BinaryOperator<TypedValue> colonOperator = operators.registerOperator(new BinaryOperator.Direct<TypedValue>(":", PRIORITY_CONS, Associativity.RIGHT) {
+		final BinaryOperator<TypedValue> colonOperator = operators.registerOperator(new BinaryOperator.Direct<TypedValue>(":", PRIORITY_CONS, OperatorAssociativity.RIGHT) {
 			@Override
 			public TypedValue execute(TypedValue left, TypedValue right) {
 				return domain.create(Cons.class, new Cons(left, right));

@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import info.openmods.calc.executable.BinaryOperator;
+import info.openmods.calc.parsing.ast.OperatorAssociativity;
 import info.openmods.calc.types.multi.TypeDomain.Coercion;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
 import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
@@ -79,7 +80,7 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 
 		private final int precedence;
 
-		private final BinaryOperator.Associativity associativity;
+		private final OperatorAssociativity associativity;
 
 		private final Map<Class<?>, IGenericOperation> coercedOperations = Maps.newHashMap();
 
@@ -87,7 +88,7 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 
 		private IDefaultOperation defaultOperation;
 
-		public Builder(String id, int precedence, BinaryOperator.Associativity associativity) {
+		public Builder(String id, int precedence, OperatorAssociativity associativity) {
 			this.id = id;
 			this.precedence = precedence;
 			this.associativity = associativity;
@@ -253,7 +254,7 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 
 	private final TypeDomain domain;
 
-	private TypedBinaryOperator(String id, int precedence, Associativity associativity,
+	private TypedBinaryOperator(String id, int precedence, OperatorAssociativity associativity,
 			TypeDomain domain,
 			Map<Class<?>, IGenericOperation> coercedOperations,
 			Table<Class<?>, Class<?>, IGenericOperation> variantOperations,

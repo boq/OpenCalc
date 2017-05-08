@@ -1,7 +1,6 @@
 package info.openmods.calc;
 
 import com.google.common.collect.ImmutableList;
-import info.openmods.calc.executable.BinaryOperator.Associativity;
 import info.openmods.calc.parsing.ast.IAstParser;
 import info.openmods.calc.parsing.ast.IModifierStateTransition;
 import info.openmods.calc.parsing.ast.INodeFactory;
@@ -9,6 +8,7 @@ import info.openmods.calc.parsing.ast.IOperator;
 import info.openmods.calc.parsing.ast.IParserState;
 import info.openmods.calc.parsing.ast.ISymbolCallStateTransition;
 import info.openmods.calc.parsing.ast.OperatorArity;
+import info.openmods.calc.parsing.ast.OperatorAssociativity;
 import info.openmods.calc.parsing.ast.QuotedParser;
 import info.openmods.calc.parsing.ast.QuotedParser.IQuotedExprNodeFactory;
 import info.openmods.calc.parsing.token.Token;
@@ -37,15 +37,15 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 	public static class DummyBinaryOperator extends DummyOperator {
 
-		public final Associativity associativity;
+		public final OperatorAssociativity associativity;
 
-		public DummyBinaryOperator(int precedence, String id, Associativity associativity) {
+		public DummyBinaryOperator(int precedence, String id, OperatorAssociativity associativity) {
 			super(precedence, id);
 			this.associativity = associativity;
 		}
 
 		public DummyBinaryOperator(int precedence, String id) {
-			this(precedence, id, Associativity.LEFT);
+			this(precedence, id, OperatorAssociativity.LEFT);
 		}
 
 		@Override
@@ -94,7 +94,7 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 	public static final DummyOperator DOT = new DummyBinaryOperator(4, "."); // higher than unary
 
-	public static final DummyOperator ASSIGN = new DummyBinaryOperator(1, "=", Associativity.RIGHT);
+	public static final DummyOperator ASSIGN = new DummyBinaryOperator(1, "=", OperatorAssociativity.RIGHT);
 
 	public static class TestAstNode {
 		public final String type;

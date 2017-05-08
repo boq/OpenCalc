@@ -3,38 +3,22 @@ package info.openmods.calc.executable;
 import info.openmods.calc.Frame;
 import info.openmods.calc.FrameFactory;
 import info.openmods.calc.parsing.ast.OperatorArity;
+import info.openmods.calc.parsing.ast.OperatorAssociativity;
 import info.openmods.calc.symbol.SymbolMap;
 import info.openmods.calc.utils.Stack;
 
 public abstract class BinaryOperator<E> extends Operator<E> {
 
-	public static final Associativity DEFAULT_ASSOCIATIVITY = Associativity.LEFT;
+	public static final OperatorAssociativity DEFAULT_ASSOCIATIVITY = OperatorAssociativity.LEFT;
 
-	public enum Associativity {
-		LEFT {
-			@Override
-			public boolean isLessThan(int left, int right) {
-				return left <= right;
-			}
-		},
-		RIGHT {
-			@Override
-			public boolean isLessThan(int left, int right) {
-				return left < right;
-			}
-		};
-
-		public abstract boolean isLessThan(int left, int right);
-	}
-
-	public final Associativity associativity;
+	public final OperatorAssociativity associativity;
 
 	@Override
 	public OperatorArity arity() {
 		return OperatorArity.BINARY;
 	}
 
-	private BinaryOperator(String id, int precedence, Associativity associativity) {
+	private BinaryOperator(String id, int precedence, OperatorAssociativity associativity) {
 		super(id, precedence);
 		this.associativity = associativity;
 	}
@@ -44,7 +28,7 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 	}
 
 	public abstract static class Direct<E> extends BinaryOperator<E> {
-		public Direct(String id, int precedence, Associativity associativity) {
+		public Direct(String id, int precedence, OperatorAssociativity associativity) {
 			super(id, precedence, associativity);
 		}
 
@@ -66,7 +50,7 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 	}
 
 	public abstract static class Scoped<E> extends BinaryOperator<E> {
-		public Scoped(String id, int precedence, Associativity associativity) {
+		public Scoped(String id, int precedence, OperatorAssociativity associativity) {
 			super(id, precedence, associativity);
 		}
 
@@ -88,7 +72,7 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 	}
 
 	public abstract static class StackBased<E> extends BinaryOperator<E> {
-		public StackBased(String id, int precedence, Associativity associativity) {
+		public StackBased(String id, int precedence, OperatorAssociativity associativity) {
 			super(id, precedence, associativity);
 		}
 
