@@ -87,7 +87,8 @@ public class TypedValueCalculatorFactory {
 		}
 	};
 
-	private static final int PRIORITY_MAX = 180; // basically magic
+	private static final int PRIORITY_MAX = 185; // basically magic, i.e. .
+	private static final int PRIORITY_UNARY = 180; // unary
 	private static final int PRIORITY_NULL_AWARE = 175; // ??
 	private static final int PRIORITY_EXP = 170; // **
 	private static final int PRIORITY_MULTIPLY = 160; // * / % //
@@ -109,7 +110,7 @@ public class TypedValueCalculatorFactory {
 
 	private static class MarkerUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 		public MarkerUnaryOperator(String id) {
-			super(id);
+			super(id, PRIORITY_UNARY);
 		}
 
 		@Override
@@ -194,7 +195,7 @@ public class TypedValueCalculatorFactory {
 	}
 
 	private static TypedUnaryOperator createUnaryNegation(String id, TypeDomain domain) {
-		return new TypedUnaryOperator.Builder(id)
+		return new TypedUnaryOperator.Builder(id, PRIORITY_UNARY)
 				.registerOperation(new TypedUnaryOperator.ISimpleOperation<BigInteger, BigInteger>() {
 					@Override
 					public BigInteger apply(BigInteger value) {
@@ -1028,7 +1029,7 @@ public class TypedValueCalculatorFactory {
 
 		// bitwise
 
-		operators.registerOperator(new TypedUnaryOperator.Builder("~")
+		operators.registerOperator(new TypedUnaryOperator.Builder("~", PRIORITY_UNARY)
 				.registerOperation(new TypedUnaryOperator.ISimpleOperation<Boolean, BigInteger>() {
 					@Override
 					public BigInteger apply(Boolean value) {

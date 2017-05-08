@@ -34,7 +34,8 @@ public class TypedUnaryOperatorTest {
 		domain.registerType(Number.class);
 		domain.registerType(Boolean.class);
 
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*")
+		final int precedence = 4;
+		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", precedence)
 				.registerOperation(new IOperation<Integer>() {
 					@Override
 					public TypedValue apply(TypeDomain domain, Integer value) {
@@ -48,6 +49,8 @@ public class TypedUnaryOperatorTest {
 					}
 				})
 				.build(domain);
+
+		Assert.assertEquals(op.precedence, precedence);
 
 		{
 			final TypedValue result = execute(op, domain.create(Integer.class, 123));
@@ -66,7 +69,7 @@ public class TypedUnaryOperatorTest {
 		domain.registerType(Integer.class);
 		domain.registerType(Boolean.class);
 
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*")
+		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", 0)
 				.registerOperation(new ISimpleOperation<Integer, Boolean>() {
 					@Override
 					public Boolean apply(Integer value) {
@@ -87,7 +90,7 @@ public class TypedUnaryOperatorTest {
 
 		final TypedValue value = domain.create(Integer.class, 2);
 
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*")
+		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", 0)
 				.setDefaultOperation(new TypedUnaryOperator.IDefaultOperation() {
 					@Override
 					public Optional<TypedValue> apply(TypeDomain domain, TypedValue v) {

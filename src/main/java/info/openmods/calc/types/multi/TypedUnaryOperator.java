@@ -47,12 +47,15 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 
 		private final String id;
 
+		private final int precendence;
+
 		private final Map<Class<?>, IGenericOperation> operations = Maps.newHashMap();
 
 		private IDefaultOperation defaultOperation;
 
-		public Builder(String id) {
+		public Builder(String id, int precedence) {
 			this.id = id;
+			this.precendence = precedence;
 		}
 
 		@SuppressWarnings("unchecked")
@@ -128,12 +131,12 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 			for (IGenericOperation op : operations.values())
 				op.validate(domain);
 
-			return new TypedUnaryOperator(id, operations, defaultOperation, domain);
+			return new TypedUnaryOperator(id, precendence, operations, defaultOperation, domain);
 		}
 	}
 
-	public TypedUnaryOperator(String id, Map<Class<?>, IGenericOperation> operations, IDefaultOperation defaultOperation, TypeDomain domain) {
-		super(id);
+	public TypedUnaryOperator(String id, int precedence, Map<Class<?>, IGenericOperation> operations, IDefaultOperation defaultOperation, TypeDomain domain) {
+		super(id, precedence);
 		this.operations = ImmutableMap.copyOf(operations);
 		this.defaultOperation = defaultOperation;
 		this.domain = domain;

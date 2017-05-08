@@ -22,8 +22,11 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 		private final String id;
 
-		public DummyOperator(String id) {
+		public final int precedence;
+
+		public DummyOperator(int precedence, String id) {
 			this.id = id;
+			this.precedence = precedence;
 		}
 
 		@Override
@@ -34,13 +37,10 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 	public static class DummyBinaryOperator extends DummyOperator {
 
-		public final int precedence;
-
 		public final Associativity associativity;
 
 		public DummyBinaryOperator(int precedence, String id, Associativity associativity) {
-			super(id);
-			this.precedence = precedence;
+			super(precedence, id);
 			this.associativity = associativity;
 		}
 
@@ -50,10 +50,7 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 		@Override
 		public boolean isLowerPriority(DummyOperator other) {
-			if (other.arity() == OperatorArity.UNARY) return true; // unary operators always have higher precedence than binary
-
-			final DummyBinaryOperator o = (DummyBinaryOperator)other;
-			return associativity.isLessThan(precedence, o.precedence);
+			return associativity.isLessThan(this.precedence, other.precedence);
 		}
 
 		@Override
@@ -65,8 +62,8 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 	public static class DummyUnaryOperator extends DummyOperator {
 
-		public DummyUnaryOperator(String id) {
-			super(id);
+		public DummyUnaryOperator(int precedence, String id) {
+			super(precedence, id);
 		}
 
 		@Override
@@ -76,24 +73,26 @@ public class AstParserTestUtils extends CalcTestUtils {
 
 		@Override
 		public boolean isLowerPriority(DummyOperator other) {
-			return false; // every other operator has lower or equal precendence
+			return this.precedence < other.precedence;
 		}
 
 	}
 
 	public static final DummyOperator PLUS = new DummyBinaryOperator(1, "+");
 
-	public static final DummyOperator UNARY_PLUS = new DummyUnaryOperator("+");
+	public static final DummyOperator UNARY_PLUS = new DummyUnaryOperator(3, "+");
 
 	public static final DummyOperator MINUS = new DummyBinaryOperator(1, "-");
 
-	public static final DummyOperator UNARY_MINUS = new DummyUnaryOperator("-");
+	public static final DummyOperator UNARY_MINUS = new DummyUnaryOperator(3, "-");
 
-	public static final DummyOperator UNARY_NEG = new DummyUnaryOperator("!");
+	public static final DummyOperator UNARY_NEG = new DummyUnaryOperator(3, "!");
 
 	public static final DummyOperator MULTIPLY = new DummyBinaryOperator(2, "*");
 
 	public static final DummyOperator DEFAULT = new DummyBinaryOperator(2, "<*>");
+
+	public static final DummyOperator DOT = new DummyBinaryOperator(4, "."); // higher than unary
 
 	public static final DummyOperator ASSIGN = new DummyBinaryOperator(1, "=", Associativity.RIGHT);
 

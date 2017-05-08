@@ -8,14 +8,18 @@ import info.openmods.calc.utils.Stack;
 
 public abstract class UnaryOperator<E> extends Operator<E> {
 
-	private UnaryOperator(String id) {
-		super(id);
+	private UnaryOperator(String id, int precendence) {
+		super(id, precendence);
 	}
 
 	public abstract static class Direct<E> extends UnaryOperator<E> {
 
+		public Direct(String id, int precendence) {
+			super(id, precendence);
+		}
+
 		public Direct(String id) {
-			super(id);
+			this(id, Integer.MAX_VALUE);
 		}
 
 		public abstract E execute(E value);
@@ -37,8 +41,12 @@ public abstract class UnaryOperator<E> extends Operator<E> {
 
 	public abstract static class Scoped<E> extends UnaryOperator<E> {
 
+		public Scoped(String id, int precendence) {
+			super(id, precendence);
+		}
+
 		public Scoped(String id) {
-			super(id);
+			this(id, Integer.MAX_VALUE);
 		}
 
 		public abstract E execute(SymbolMap<E> symbols, E value);
@@ -55,8 +63,12 @@ public abstract class UnaryOperator<E> extends Operator<E> {
 
 	public abstract static class StackBased<E> extends UnaryOperator<E> {
 
+		public StackBased(String id, int precendence) {
+			super(id, precendence);
+		}
+
 		public StackBased(String id) {
-			super(id);
+			this(id, Integer.MAX_VALUE);
 		}
 
 		public abstract void executeOnStack(Frame<E> frame);
@@ -71,7 +83,7 @@ public abstract class UnaryOperator<E> extends Operator<E> {
 
 	@Override
 	public boolean isLowerPriority(Operator<E> other) {
-		return false; // every other operator has lower or equal precendence
+		return this.precedence < other.precedence;
 	}
 
 	@Override

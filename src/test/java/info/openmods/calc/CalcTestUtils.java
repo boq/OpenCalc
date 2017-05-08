@@ -141,6 +141,8 @@ public class CalcTestUtils {
 
 	public static final Token OP_ASSIGN = op("=");
 
+	public static final Token OP_DOT = op(".");
+
 	public static class StackCheck<E> {
 		private final Calculator<E, ExprType> sut;
 

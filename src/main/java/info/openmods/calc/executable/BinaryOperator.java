@@ -27,8 +27,6 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 		public abstract boolean isLessThan(int left, int right);
 	}
 
-	public final int precedence;
-
 	public final Associativity associativity;
 
 	@Override
@@ -37,8 +35,7 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 	}
 
 	private BinaryOperator(String id, int precedence, Associativity associativity) {
-		super(id);
-		this.precedence = precedence;
+		super(id, precedence);
 		this.associativity = associativity;
 	}
 
@@ -111,10 +108,7 @@ public abstract class BinaryOperator<E> extends Operator<E> {
 
 	@Override
 	public boolean isLowerPriority(Operator<E> other) {
-		if (other instanceof UnaryOperator) return true; // unary operators always have higher precedence than binary
-
-		final BinaryOperator<E> o = (BinaryOperator<E>)other;
-		return associativity.isLessThan(precedence, o.precedence);
+		return associativity.isLessThan(this.precedence, other.precedence);
 	}
 
 	@Override

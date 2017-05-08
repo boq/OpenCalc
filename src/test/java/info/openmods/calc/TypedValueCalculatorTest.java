@@ -194,6 +194,11 @@ public class TypedValueCalculatorTest {
 		infix("2 * 3").expectResult(i(6));
 		infix("10 / 2").expectResult(d(5.0));
 
+		infix("-2").expectResult(i(-2));
+		infix("--2").expectResult(i(2));
+		infix("+2").expectResult(i(2));
+		infix("++2").expectResult(i(2));
+
 		infix("10 // 2").expectResult(i(5));
 		infix("10.7 // 2").expectResult(d(5.0));
 		infix("-2.3 // 3").expectResult(d(-1.0));
@@ -583,6 +588,26 @@ public class TypedValueCalculatorTest {
 
 		infix("(root.a).b.path").expectResult(s("a/b"));
 		prefix("(. (. root a) b path)").expectResult(s("a/b"));
+	}
+
+	private class TestCharToIntComposite implements MetaObject.SlotAttr {
+		@Override
+		public Optional<TypedValue> attr(TypedValue self, String key, Frame<TypedValue> frame) {
+			return Optional.of(i(key.codePointAt(0)));
+		}
+	}
+
+	@Test
+	public void testDotOperatorPrecedenceOverUnaryOp() {
+		sut.environment.setGlobalSymbol("test", domain.create(DummyObject.class, DUMMY,
+				MetaObject.builder().set(new TestCharToIntComposite()).build()));
+
+		infix("-test.a").expectResults(i(-97));
+		infix("-test.a.bitLength").expectResults(i(-7));
+
+		infix("-test.a == -'a'.ord").expectResults(TRUE);
+		infix("-test.a == -(test.a)").expectResults(TRUE);
+		infix("-test.'a' == -'a'.ord").expectResults(TRUE);
 	}
 
 	@Test
@@ -3151,7 +3176,8 @@ public class TypedValueCalculatorTest {
 	public void testIntBitLength() {
 		infix("0.bitLength").expectResult(i(0));
 		infix("0b100.bitLength").expectResult(i(3));
-		infix("-0b100.bitLength").expectResult(i(2)); // would be 3 in Python...
+		infix("(-0b100).bitLength").expectResult(i(2)); // would be 3 in Python...
+		infix("-0b100.bitLength").expectResult(i(-3));
 	}
 
 	@Test
@@ -3385,4 +3411,5 @@ public class TypedValueCalculatorTest {
 		test.strValue = "hello";
 		infix("test.strValue").expectResult(s("hello!"));
 	}
+
 }

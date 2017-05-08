@@ -19,6 +19,7 @@ public class InfixCompilerTest extends AstParserTestUtils {
 		operators.registerOperator(UNARY_MINUS);
 		operators.registerOperator(UNARY_NEG);
 		operators.registerOperator(MULTIPLY);
+		operators.registerOperator(DOT);
 
 		// token for default added only for testing purposes
 		operators.registerOperator(DEFAULT).setDefault();
@@ -463,5 +464,13 @@ public class InfixCompilerTest extends AstParserTestUtils {
 		given(QUOTE_MODIFIER, symbol("abc"), LEFT_BRACKET, dec("12"), RIGHT_BRACKET)
 				.expectSameAs(QUOTE_MODIFIER, symbol("abc"), OP_DEFAULT, LEFT_BRACKET, dec("12"), RIGHT_BRACKET)
 				.expect(operator(DEFAULT, quoteModifier(quotedToken(symbol("abc"))), brackets(valueDec("12"))));
+	}
+
+	@Test
+	public void testHighPriorityBinaryOverUnary() {
+		// -a.b
+		given(OP_MINUS, symbol("a"), OP_DOT, symbol("b")).expect(operator(UNARY_MINUS, operator(DOT, get("a"), get("b"))));
+		// -a.b.c
+		given(OP_MINUS, symbol("a"), OP_DOT, symbol("b"), OP_DOT, symbol("c")).expect(operator(UNARY_MINUS, operator(DOT, operator(DOT, get("a"), get("b")), get("c"))));
 	}
 }
