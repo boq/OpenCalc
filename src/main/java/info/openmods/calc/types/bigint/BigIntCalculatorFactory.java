@@ -13,7 +13,7 @@ import info.openmods.calc.parsing.BasicCompilerMapFactory;
 import info.openmods.calc.parsing.CommonSimpleSymbolFactory;
 import info.openmods.calc.parsing.IValueParser;
 import info.openmods.calc.symbol.BinaryFunction;
-import info.openmods.calc.symbol.GenericFunctions.AccumulatorFunction;
+import info.openmods.calc.symbol.GenericFunctions.DirectAccumulatorFunction;
 import info.openmods.calc.symbol.NullaryFunction;
 import info.openmods.calc.symbol.TernaryFunction;
 import info.openmods.calc.symbol.UnaryFunction;
@@ -55,28 +55,28 @@ public class BigIntCalculatorFactory<M> extends SimpleCalculatorFactory<BigInteg
 			}
 		});
 
-		env.setGlobalSymbol("min", new AccumulatorFunction<BigInteger>(NULL_VALUE) {
+		env.setGlobalSymbol("min", new DirectAccumulatorFunction<BigInteger>(NULL_VALUE) {
 			@Override
 			protected BigInteger accumulate(BigInteger result, BigInteger value) {
 				return result.min(value);
 			}
 		});
 
-		env.setGlobalSymbol("max", new AccumulatorFunction<BigInteger>(NULL_VALUE) {
+		env.setGlobalSymbol("max", new DirectAccumulatorFunction<BigInteger>(NULL_VALUE) {
 			@Override
 			protected BigInteger accumulate(BigInteger result, BigInteger value) {
 				return result.max(value);
 			}
 		});
 
-		env.setGlobalSymbol("sum", new AccumulatorFunction<BigInteger>(NULL_VALUE) {
+		env.setGlobalSymbol("sum", new DirectAccumulatorFunction<BigInteger>(NULL_VALUE) {
 			@Override
 			protected BigInteger accumulate(BigInteger result, BigInteger value) {
 				return result.add(value);
 			}
 		});
 
-		env.setGlobalSymbol("avg", new AccumulatorFunction<BigInteger>(NULL_VALUE) {
+		env.setGlobalSymbol("avg", new DirectAccumulatorFunction<BigInteger>(NULL_VALUE) {
 			@Override
 			protected BigInteger accumulate(BigInteger result, BigInteger value) {
 				return result.add(value);

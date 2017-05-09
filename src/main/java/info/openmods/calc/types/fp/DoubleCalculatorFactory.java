@@ -13,7 +13,7 @@ import info.openmods.calc.parsing.BasicCompilerMapFactory;
 import info.openmods.calc.parsing.CommonSimpleSymbolFactory;
 import info.openmods.calc.parsing.IValueParser;
 import info.openmods.calc.symbol.BinaryFunction;
-import info.openmods.calc.symbol.GenericFunctions.AccumulatorFunction;
+import info.openmods.calc.symbol.GenericFunctions.DirectAccumulatorFunction;
 import info.openmods.calc.symbol.NullaryFunction;
 import info.openmods.calc.symbol.UnaryFunction;
 import java.util.Random;
@@ -198,28 +198,28 @@ public class DoubleCalculatorFactory<M> extends SimpleCalculatorFactory<Double, 
 			}
 		});
 
-		env.setGlobalSymbol("min", new AccumulatorFunction<Double>(NULL_VALUE) {
+		env.setGlobalSymbol("min", new DirectAccumulatorFunction<Double>(NULL_VALUE) {
 			@Override
 			protected Double accumulate(Double result, Double value) {
 				return Math.min(result, value);
 			}
 		});
 
-		env.setGlobalSymbol("max", new AccumulatorFunction<Double>(NULL_VALUE) {
+		env.setGlobalSymbol("max", new DirectAccumulatorFunction<Double>(NULL_VALUE) {
 			@Override
 			protected Double accumulate(Double result, Double value) {
 				return Math.max(result, value);
 			}
 		});
 
-		env.setGlobalSymbol("sum", new AccumulatorFunction<Double>(NULL_VALUE) {
+		env.setGlobalSymbol("sum", new DirectAccumulatorFunction<Double>(NULL_VALUE) {
 			@Override
 			protected Double accumulate(Double result, Double value) {
 				return result + value;
 			}
 		});
 
-		env.setGlobalSymbol("avg", new AccumulatorFunction<Double>(NULL_VALUE) {
+		env.setGlobalSymbol("avg", new DirectAccumulatorFunction<Double>(NULL_VALUE) {
 			@Override
 			protected Double accumulate(Double result, Double value) {
 				return result + value;

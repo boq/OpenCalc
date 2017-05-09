@@ -3,10 +3,13 @@ package info.openmods.calc.types.multi;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import info.openmods.calc.Frame;
 import info.openmods.calc.FrameFactory;
+import info.openmods.calc.utils.MiscUtils;
 import info.openmods.calc.utils.OptionalInt;
 import info.openmods.calc.utils.Stack;
 import java.lang.annotation.ElementType;
@@ -16,6 +19,7 @@ import java.lang.annotation.Target;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class MetaObject {
 
@@ -49,10 +53,18 @@ public class MetaObject {
 		this.slotType = builder.slotType;
 		this.slotDecompose = builder.slotDecompose;
 		this.slotDir = builder.slotDir;
+		this.slotsBinaryOps = ImmutableMap.copyOf(builder.slotsBinaryOps);
+		this.slotsUnaryOps = ImmutableMap.copyOf(builder.slotsUnaryOps);
 	}
 
 	private static <T extends Slot> T update(T update, T original) {
 		return update != null? update : original;
+	}
+
+	private static <T extends Slot> Map<String, T> update(Map<String, T> update, Map<String, T> original) {
+		final Map<String, T> mutableMap = Maps.newHashMap(original);
+		mutableMap.putAll(update);
+		return ImmutableMap.copyOf(mutableMap);
 	}
 
 	private MetaObject(MetaObject prev, Builder builder) {
@@ -67,6 +79,8 @@ public class MetaObject {
 		this.slotType = update(builder.slotType, prev.slotType);
 		this.slotDecompose = update(builder.slotDecompose, prev.slotDecompose);
 		this.slotDir = update(builder.slotDir, prev.slotDir);
+		this.slotsBinaryOps = update(builder.slotsBinaryOps, prev.slotsBinaryOps);
+		this.slotsUnaryOps = update(builder.slotsUnaryOps, prev.slotsUnaryOps);
 	}
 
 	public interface SlotBool extends Slot {
@@ -559,6 +573,81 @@ public class MetaObject {
 	@SlotField(adapter = SlotDirAdapter.class)
 	public final SlotDir slotDir;
 
+	public interface SlotUnaryOp extends Slot {
+		public TypedValue op(TypedValue self, Frame<TypedValue> frame);
+	}
+
+	public static class SlotUnaryOpAdapter implements SlotAdapter<SlotUnaryOp> {
+
+		@Override
+		public void call(SlotUnaryOp slot, Frame<TypedValue> frame, OptionalInt argumentsCount, OptionalInt returnsCount) {
+			argumentsCount.compareIfPresent(1);
+			returnsCount.compareIfPresent(1);
+			final Stack<TypedValue> stack = frame.stack();
+
+			final TypedValue self = stack.pop();
+			final TypedValue result = slot.op(self, frame);
+			stack.push(result);
+		}
+
+		@Override
+		public SlotUnaryOp wrap(final TypedValue callable) {
+			class WrappedSlot implements SlotUnaryOp, SlotWithValue {
+				@Override
+				public TypedValue op(TypedValue self, Frame<TypedValue> frame) {
+					return callFunction(frame, callable, self);
+				}
+
+				@Override
+				public TypedValue getValue() {
+					return callable;
+				}
+			}
+			return new WrappedSlot();
+		}
+	}
+
+	@SlotField(adapter = SlotUnaryOpAdapter.class)
+	public final Map<String, SlotUnaryOp> slotsUnaryOps;
+
+	public interface SlotBinaryOp extends Slot {
+		public TypedValue op(TypedValue left, TypedValue right, Frame<TypedValue> frame);
+	}
+
+	public static class SlotBinaryOpAdapter implements SlotAdapter<SlotBinaryOp> {
+
+		@Override
+		public void call(SlotBinaryOp slot, Frame<TypedValue> frame, OptionalInt argumentsCount, OptionalInt returnsCount) {
+			argumentsCount.compareIfPresent(2);
+			returnsCount.compareIfPresent(1);
+			final Stack<TypedValue> stack = frame.stack();
+
+			final TypedValue other = stack.pop();
+			final TypedValue self = stack.pop();
+			final TypedValue result = slot.op(self, other, frame);
+			stack.push(result);
+		}
+
+		@Override
+		public SlotBinaryOp wrap(final TypedValue callable) {
+			class WrappedSlot implements SlotBinaryOp, SlotWithValue {
+				@Override
+				public TypedValue op(TypedValue self, TypedValue other, Frame<TypedValue> frame) {
+					return callFunction(frame, callable, self, other);
+				}
+
+				@Override
+				public TypedValue getValue() {
+					return callable;
+				}
+			}
+			return new WrappedSlot();
+		}
+	}
+
+	@SlotField(adapter = SlotBinaryOpAdapter.class)
+	public final Map<String, SlotBinaryOp> slotsBinaryOps;
+
 	public static class Builder {
 		private SlotBool slotBool;
 
@@ -581,6 +670,10 @@ public class MetaObject {
 		private SlotDecompose slotDecompose;
 
 		private SlotDir slotDir;
+
+		private Map<String, SlotBinaryOp> slotsBinaryOps = Maps.newHashMap();
+
+		private Map<String, SlotUnaryOp> slotsUnaryOps = Maps.newHashMap();
 
 		public Builder set(SlotBool slotBool) {
 			Preconditions.checkState(this.slotBool == null);
@@ -645,6 +738,16 @@ public class MetaObject {
 		public Builder set(SlotDir slotDir) {
 			Preconditions.checkState(this.slotDir == null);
 			this.slotDir = slotDir;
+			return this;
+		}
+
+		public Builder set(String op, SlotBinaryOp slotBinaryOp) {
+			MiscUtils.putOnce(slotsBinaryOps, op, slotBinaryOp);
+			return this;
+		}
+
+		public Builder set(String op, SlotUnaryOp slotUnaryOp) {
+			MiscUtils.putOnce(slotsUnaryOps, op, slotUnaryOp);
 			return this;
 		}
 

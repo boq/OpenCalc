@@ -2537,17 +2537,51 @@ public class TypedValueCalculatorTest {
 								return "dummy";
 							}
 						})
+						.set("+", new MetaObject.SlotUnaryOp() {
+							@Override
+							public TypedValue op(TypedValue self, Frame<TypedValue> frame) {
+								return NULL;
+							}
+						})
+						.set("-", new MetaObject.SlotUnaryOp() {
+							@Override
+							public TypedValue op(TypedValue self, Frame<TypedValue> frame) {
+								return NULL;
+							}
+						})
 						.build()));
 
-		infix("dir(slots)").expectResult(list(s("attr"), s("bool"), s("call"), s("decompose"), s("dir"), s("equals"), s("length"), s("repr"), s("slice"), s("str"), s("type")));
+		infix("dir(slots)").expectResult(list(
+				s("attr"),
+				s("binaryops"),
+				s("bool"),
+				s("call"),
+				s("decompose"),
+				s("dir"),
+				s("equals"),
+				s("length"),
+				s("repr"),
+				s("slice"),
+				s("str"),
+				s("type"),
+				s("unaryops")));
 
 		infix("has(test, slots.str)").expectResult(TRUE);
 		infix("has(test, slots.repr)").expectResult(FALSE);
 		infix("has(test, slots.bool)").expectResult(TRUE);
 
+		infix("has(test, slots.unaryops('+'))").expectResult(TRUE);
+		infix("has(test, slots.unaryops('-'))").expectResult(TRUE);
+		infix("has(test, slots.unaryops('*'))").expectResult(FALSE);
+
+		infix("has(test, slots.unaryops.'+')").expectResult(TRUE);
+
 		infix("match((slots.str(x)) -> 'can', (_) -> 'cannot')(test)").expectResult(s("can"));
 		infix("match((slots.str(x)) -> 'can', (_) -> 'cannot')(4)").expectResult(s("can"));
 		infix("match((slots.str(x)) -> 'can', (_) -> 'cannot')(locals())").expectResult(s("cannot"));
+
+		infix("match((slots.unaryops.'+'(x)) -> 'can', (_) -> 'cannot')(test)").expectResult(s("can"));
+		infix("match((slots.unaryops.'*'(x)) -> 'can', (_) -> 'cannot')(test)").expectResult(s("cannot"));
 	}
 
 	@Test
@@ -2577,11 +2611,17 @@ public class TypedValueCalculatorTest {
 	public void testCustomMetaCreationAndSetting() {
 		infix("type(metaobject(slots.str=(s) -> 'hello')) == metaobject").expectResult(TRUE);
 		infix("let([callableInt=setmetaobject(13, metaobject(slots.call = (self, other) -> self + other))], callableInt(21))").expectResult(i(34));
+
+		infix("let([weirdStr=setmetaobject('abc', metaobject(slots.binaryops('/') = (self, other) -> self + other))], weirdStr / 'def')").expectResult(s("abcdef"));
+		infix("let([weirdStr=setmetaobject('abc', metaobject(slots.binaryops('<=') = (self, other) -> self + other))], weirdStr <= 'def')").expectResult(s("abcdef"));
+
+		infix("let([weirdStr=setmetaobject('abc', metaobject(slots.unaryops('-') = (self) -> 'wut?'))], -weirdStr)").expectResult(s("wut?"));
 	}
 
 	@Test
 	public void testCustomMetaObjectSlotRetrievalOptimization() {
 		infix("let([f = (s) -> 'hello'], metaobject(slots.str=f).str == f)").expectResult(TRUE);
+		infix("let([f = (s) -> 'hello'], metaobject(slots.binaryops('+')=f).binaryops('+') == f)").expectResult(TRUE);
 	}
 
 	@Test
@@ -2592,6 +2632,7 @@ public class TypedValueCalculatorTest {
 	@Test
 	public void testCustomMetaObjectUpdateFromNative() {
 		infix("letseq([originalMetaobject = getmetaobject('s'), callableStr=setmetaobject('hello', originalMetaobject(slots.call = (self) -> 'world'))], callableStr + ' ' + callableStr())").expectResult(s("hello world"));
+		infix("letseq([originalMetaobject = getmetaobject('abc'), reversibleStr=setmetaobject('abc', originalMetaobject(slots.unaryops('-') = (self) -> self.reverse))], -reversibleStr)").expectResult(s("cba"));
 	}
 
 	@Test

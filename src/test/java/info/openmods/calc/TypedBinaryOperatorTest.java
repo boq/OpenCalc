@@ -2,6 +2,7 @@ package info.openmods.calc;
 
 import com.google.common.base.Optional;
 import info.openmods.calc.executable.BinaryOperator;
+import info.openmods.calc.types.multi.MetaObject;
 import info.openmods.calc.types.multi.TypeDomain;
 import info.openmods.calc.types.multi.TypeDomain.Coercion;
 import info.openmods.calc.types.multi.TypedBinaryOperator;
@@ -38,7 +39,7 @@ public class TypedBinaryOperatorTest {
 		domain.registerType(String.class);
 		domain.registerType(Boolean.class);
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.registerOperation(new IVariantOperation<String, Integer>() {
 					@Override
 					public TypedValue apply(TypeDomain domain, String left, Integer right) {
@@ -59,7 +60,7 @@ public class TypedBinaryOperatorTest {
 		domain.registerType(String.class);
 		domain.registerType(Boolean.class);
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.registerOperation(new ISimpleVariantOperation<String, Integer, Boolean>() {
 					@Override
 					public Boolean apply(String left, Integer right) {
@@ -83,7 +84,7 @@ public class TypedBinaryOperatorTest {
 		domain.registerCast(Integer.class, Number.class);
 		domain.registerCoercionRule(Integer.class, Number.class, Coercion.TO_RIGHT);
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.registerOperation(new ICoercedOperation<Number>() {
 					@Override
 					public TypedValue apply(TypeDomain domain, Number left, Number right) {
@@ -105,7 +106,7 @@ public class TypedBinaryOperatorTest {
 		domain.registerCast(Integer.class, Number.class);
 		domain.registerCoercionRule(Integer.class, Number.class, Coercion.TO_RIGHT);
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.registerOperation(new ISimpleCoercedOperation<Number, Boolean>() {
 					@Override
 					public Boolean apply(Number left, Number right) {
@@ -122,7 +123,7 @@ public class TypedBinaryOperatorTest {
 		final TypeDomain domain = new TypeDomain();
 		domain.registerType(Integer.class);
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.registerOperation(new ISimpleCoercedOperation<Integer, Integer>() {
 					@Override
 					public Integer apply(Integer left, Integer right) {
@@ -144,7 +145,7 @@ public class TypedBinaryOperatorTest {
 		final TypedValue l = domain.create(Integer.class, 2);
 		final TypedValue r = domain.create(String.class, "a");
 
-		final TypedBinaryOperator op = new TypedBinaryOperator.Builder("+", 0)
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
 				.setDefaultOperation(new TypedBinaryOperator.IDefaultOperation() {
 					@Override
 					public Optional<TypedValue> apply(TypeDomain domain, TypedValue left, TypedValue right) {
@@ -153,6 +154,74 @@ public class TypedBinaryOperatorTest {
 						return Optional.of(domain.create(Boolean.class, Boolean.TRUE));
 					}
 				}).build(domain);
+
+		final TypedValue result = execute(op, l, r);
+		assertValueEquals(result, domain, Boolean.class, Boolean.TRUE);
+	}
+
+	@Test
+	public void testMetaObjectAccepting() {
+		final TypeDomain domain = new TypeDomain();
+		domain.registerType(Integer.class);
+		domain.registerType(String.class);
+		domain.registerType(Boolean.class);
+
+		final MetaObject mo = MetaObject.builder()
+				.set("+", new MetaObject.SlotBinaryOp() {
+					@Override
+					public TypedValue op(TypedValue self, TypedValue other, Frame<TypedValue> frame) {
+						assertValueEquals(self, domain, Integer.class, 2);
+						assertValueEquals(other, domain, String.class, "a");
+						return domain.create(Boolean.class, Boolean.TRUE);
+					}
+				}).build();
+
+		final TypedValue l = domain.create(Integer.class, 2, mo);
+		final TypedValue r = domain.create(String.class, "a");
+
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
+				.setDefaultOperation(new TypedBinaryOperator.IDefaultOperation() {
+					@Override
+					public Optional<TypedValue> apply(TypeDomain domain, TypedValue left, TypedValue right) {
+						throw new AssertionError("Invalid function called");
+					}
+				})
+				.build(domain);
+
+		final TypedValue result = execute(op, l, r);
+		assertValueEquals(result, domain, Boolean.class, Boolean.TRUE);
+	}
+
+	@Test
+	public void testMetaObjectIgnoring() {
+		final TypeDomain domain = new TypeDomain();
+		domain.registerType(Integer.class);
+		domain.registerType(String.class);
+		domain.registerType(Boolean.class);
+
+		final MetaObject mo = MetaObject.builder()
+				.set("+", new MetaObject.SlotBinaryOp() {
+					@Override
+					public TypedValue op(TypedValue self, TypedValue other, Frame<TypedValue> frame) {
+						throw new AssertionError("Invalid function called");
+
+					}
+				}).build();
+
+		final TypedValue l = domain.create(Integer.class, 2, mo);
+		final TypedValue r = domain.create(String.class, "a");
+
+		final BinaryOperator<TypedValue> op = new TypedBinaryOperator.Builder("+", 0)
+				.setNoMetaObjectOverride()
+				.setDefaultOperation(new TypedBinaryOperator.IDefaultOperation() {
+					@Override
+					public Optional<TypedValue> apply(TypeDomain domain, TypedValue left, TypedValue right) {
+						assertValueEquals(left, domain, Integer.class, 2);
+						assertValueEquals(right, domain, String.class, "a");
+						return Optional.of(domain.create(Boolean.class, Boolean.TRUE));
+					}
+				})
+				.build(domain);
 
 		final TypedValue result = execute(op, l, r);
 		assertValueEquals(result, domain, Boolean.class, Boolean.TRUE);

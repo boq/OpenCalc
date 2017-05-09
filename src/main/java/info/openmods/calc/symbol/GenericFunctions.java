@@ -3,6 +3,7 @@ package info.openmods.calc.symbol;
 import com.google.common.collect.Lists;
 import info.openmods.calc.Environment;
 import info.openmods.calc.Frame;
+import info.openmods.calc.types.multi.TypedCalcUtils;
 import info.openmods.calc.utils.OptionalInt;
 import info.openmods.calc.utils.Stack;
 import info.openmods.calc.utils.StackValidationException;
@@ -15,10 +16,10 @@ public class GenericFunctions {
 	}
 
 	// WARNING: this assumes 'accumulate' operation is associative!
-	public abstract static class AccumulatorFunction<E> extends SingleReturnCallable<E> {
+	public abstract static class DirectAccumulatorFunction<E> extends SingleReturnCallable<E> {
 		private final E nullValue;
 
-		public AccumulatorFunction(E nullValue) {
+		public DirectAccumulatorFunction(E nullValue) {
 			this.nullValue = nullValue;
 		}
 
@@ -44,6 +45,35 @@ public class GenericFunctions {
 		}
 
 		protected abstract E accumulate(E result, E value);
+	}
+
+	public abstract static class StackBasedAccumulatorFunction<E> implements ICallable<E> {
+		private final E nullValue;
+
+		public StackBasedAccumulatorFunction(E nullValue) {
+			this.nullValue = nullValue;
+		}
+
+		@Override
+		public void call(Frame<E> frame, OptionalInt argumentsCount, OptionalInt returnsCount) {
+			TypedCalcUtils.expectSingleReturn(returnsCount);
+
+			final int args = argumentsCount.or(2);
+
+			if (args == 0) {
+				frame.stack().push(nullValue);
+			} else {
+				for (int i = 1; i < args; i++) {
+					accumulate(frame);
+				}
+
+				process(frame, args);
+			}
+		}
+
+		protected void process(Frame<E> frame, int argCount) {}
+
+		protected abstract void accumulate(Frame<E> frame);
 	}
 
 	public static <E> void createStackManipulationFunctions(Environment<E> calculator) {

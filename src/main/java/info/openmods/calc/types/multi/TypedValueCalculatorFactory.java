@@ -53,7 +53,7 @@ import info.openmods.calc.parsing.token.Tokenizer;
 import info.openmods.calc.symbol.BinaryFunction;
 import info.openmods.calc.symbol.FixedCallable;
 import info.openmods.calc.symbol.GenericFunctions;
-import info.openmods.calc.symbol.GenericFunctions.AccumulatorFunction;
+import info.openmods.calc.symbol.GenericFunctions.StackBasedAccumulatorFunction;
 import info.openmods.calc.symbol.ICallable;
 import info.openmods.calc.symbol.ISymbol;
 import info.openmods.calc.symbol.LocalSymbolMap;
@@ -63,6 +63,7 @@ import info.openmods.calc.symbol.SymbolMap;
 import info.openmods.calc.symbol.TopSymbolMap;
 import info.openmods.calc.symbol.UnaryFunction;
 import info.openmods.calc.types.multi.Cons.LinearVisitor;
+import info.openmods.calc.types.multi.MetaObject.SlotBinaryOp;
 import info.openmods.calc.types.multi.TypeDomain.Coercion;
 import info.openmods.calc.types.multi.TypedFunction.DispatchArg;
 import info.openmods.calc.types.multi.TypedFunction.OptionalArgs;
@@ -194,7 +195,7 @@ public class TypedValueCalculatorFactory {
 		}
 	}
 
-	private static TypedUnaryOperator createUnaryNegation(String id, TypeDomain domain) {
+	private static UnaryOperator<TypedValue> createUnaryNegation(String id, TypeDomain domain) {
 		return new TypedUnaryOperator.Builder(id, PRIORITY_UNARY)
 				.registerOperation(new TypedUnaryOperator.ISimpleOperation<BigInteger, BigInteger>() {
 					@Override
@@ -746,7 +747,7 @@ public class TypedValueCalculatorFactory {
 		final OperatorDictionary<Operator<TypedValue>> operators = new OperatorDictionary<Operator<TypedValue>>();
 
 		// arithmetic
-		final BinaryOperator.Direct<TypedValue> addOperator = operators.registerOperator(new TypedBinaryOperator.Builder("+", PRIORITY_ADD)
+		final BinaryOperator<TypedValue> addOperator = operators.registerOperator(new TypedBinaryOperator.Builder("+", PRIORITY_ADD)
 				.registerOperation(new TypedBinaryOperator.ISimpleCoercedOperation<BigInteger, BigInteger>() {
 					@Override
 					public BigInteger apply(BigInteger left, BigInteger right) {
@@ -855,7 +856,7 @@ public class TypedValueCalculatorFactory {
 				})
 				.build(domain)).unwrap();
 
-		final BinaryOperator.Direct<TypedValue> divideOperator = operators.registerOperator(new TypedBinaryOperator.Builder("/", PRIORITY_MULTIPLY)
+		final BinaryOperator<TypedValue> divideOperator = operators.registerOperator(new TypedBinaryOperator.Builder("/", PRIORITY_MULTIPLY)
 				.registerOperation(new TypedBinaryOperator.ISimpleCoercedOperation<Double, Double>() {
 					@Override
 					public Double apply(Double left, Double right) {
@@ -1123,30 +1124,43 @@ public class TypedValueCalculatorFactory {
 
 		final TypedValueComparator comparator = new TypedValueComparator();
 
-		abstract class BooleanComparatorOperator extends BinaryOperator.Direct<TypedValue> {
+		abstract class BooleanComparatorOperator extends BinaryOperator.StackBased<TypedValue> {
 
 			public BooleanComparatorOperator(String id, int precendence) {
 				super(id, precendence);
 			}
 
 			@Override
-			public TypedValue execute(TypedValue left, TypedValue right) {
-				final int result = comparator.compare(left, right);
-				return domain.create(Boolean.class, interpret(result));
+			public void executeOnStack(Frame<TypedValue> frame) {
+				final Stack<TypedValue> stack = frame.stack();
+
+				final TypedValue right = stack.pop();
+				final TypedValue left = stack.pop();
+
+				final SlotBinaryOp slot = left.getMetaObject().slotsBinaryOps.get(id());
+				final TypedValue result;
+				if (slot != null) {
+					result = slot.op(left, right, frame);
+				} else {
+					final int comparisionResult = comparator.compare(left, right);
+					result = domain.create(Boolean.class, interpret(comparisionResult));
+
+				}
+				stack.push(result);
 			}
 
 			protected abstract boolean interpret(int value);
 
 		}
 
-		final BinaryOperator.Direct<TypedValue> ltOperator = operators.registerOperator(new BooleanComparatorOperator("<", PRIORITY_COMPARE) {
+		final BinaryOperator<TypedValue> ltOperator = operators.registerOperator(new BooleanComparatorOperator("<", PRIORITY_COMPARE) {
 			@Override
 			protected boolean interpret(int value) {
 				return value < 0;
 			}
 		}).unwrap();
 
-		final BinaryOperator.Direct<TypedValue> gtOperator = operators.registerOperator(new BooleanComparatorOperator(">", PRIORITY_COMPARE) {
+		final BinaryOperator<TypedValue> gtOperator = operators.registerOperator(new BooleanComparatorOperator(">", PRIORITY_COMPARE) {
 			@Override
 			protected boolean interpret(int value) {
 				return value > 0;
@@ -1699,36 +1713,47 @@ public class TypedValueCalculatorFactory {
 			}
 		});
 
-		env.setGlobalSymbol("min", new AccumulatorFunction<TypedValue>(nullValue) {
+		class SelectionAccumulatorFunction extends StackBasedAccumulatorFunction<TypedValue> {
+			private final IExecutable<TypedValue> predicate;
+
+			public SelectionAccumulatorFunction(TypedValue nullValue, IExecutable<TypedValue> op) {
+				super(nullValue);
+				this.predicate = op;
+			}
+
 			@Override
-			protected TypedValue accumulate(TypedValue result, TypedValue value) {
-				return ltOperator.execute(result, value).value == Boolean.TRUE? result : value;
+			protected void accumulate(Frame<TypedValue> frame) {
+				final Stack<TypedValue> stack = frame.stack();
+				final TypedValue right = stack.peek(0);
+				final TypedValue left = stack.peek(1);
+				predicate.execute(frame);
+				final TypedValue result = stack.pop();
+				boolean selectLeft = MetaObjectUtils.boolValue(frame, result);
+				stack.push(selectLeft? left : right);
+			}
+		}
+
+		env.setGlobalSymbol("min", new SelectionAccumulatorFunction(nullValue, ltOperator));
+
+		env.setGlobalSymbol("max", new SelectionAccumulatorFunction(nullValue, gtOperator));
+
+		env.setGlobalSymbol("sum", new StackBasedAccumulatorFunction<TypedValue>(nullValue) {
+			@Override
+			protected void accumulate(Frame<TypedValue> frame) {
+				addOperator.execute(frame);
 			}
 		});
 
-		env.setGlobalSymbol("max", new AccumulatorFunction<TypedValue>(nullValue) {
+		env.setGlobalSymbol("avg", new StackBasedAccumulatorFunction<TypedValue>(nullValue) {
 			@Override
-			protected TypedValue accumulate(TypedValue result, TypedValue value) {
-				return gtOperator.execute(result, value).value == Boolean.TRUE? result : value;
-			}
-		});
-
-		env.setGlobalSymbol("sum", new AccumulatorFunction<TypedValue>(nullValue) {
-			@Override
-			protected TypedValue accumulate(TypedValue result, TypedValue value) {
-				return addOperator.execute(result, value);
-			}
-		});
-
-		env.setGlobalSymbol("avg", new AccumulatorFunction<TypedValue>(nullValue) {
-			@Override
-			protected TypedValue accumulate(TypedValue result, TypedValue value) {
-				return addOperator.execute(result, value);
+			protected void accumulate(Frame<TypedValue> frame) {
+				addOperator.execute(frame);
 			}
 
 			@Override
-			protected TypedValue process(TypedValue result, int argCount) {
-				return divideOperator.execute(result, domain.create(BigInteger.class, BigInteger.valueOf(argCount)));
+			protected void process(Frame<TypedValue> frame, int argCount) {
+				frame.stack().push(domain.create(BigInteger.class, BigInteger.valueOf(argCount)));
+				divideOperator.execute(frame);
 			}
 		});
 

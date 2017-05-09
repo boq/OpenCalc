@@ -5,13 +5,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import info.openmods.calc.Frame;
 import info.openmods.calc.executable.UnaryOperator;
+import info.openmods.calc.types.multi.MetaObject.SlotUnaryOp;
+import info.openmods.calc.utils.Stack;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
 import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
-public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
+public class TypedUnaryOperator {
 
 	public interface IOperation<A> {
 		public TypedValue apply(TypeDomain domain, A value);
@@ -25,6 +28,10 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 		public TypedValue apply(TypeDomain domain, TypedValue left);
 
 		public void validate(TypeDomain domain);
+	}
+
+	public interface IDefaultOperation {
+		public Optional<TypedValue> apply(TypeDomain domain, TypedValue value);
 	}
 
 	public static class Builder {
@@ -52,6 +59,8 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 		private final Map<Class<?>, IGenericOperation> operations = Maps.newHashMap();
 
 		private IDefaultOperation defaultOperation;
+
+		private boolean addMetaObjectOverride = true;
 
 		public Builder(String id, int precedence) {
 			this.id = id;
@@ -127,42 +136,88 @@ public class TypedUnaryOperator extends UnaryOperator.Direct<TypedValue> {
 			return this;
 		}
 
-		public TypedUnaryOperator build(TypeDomain domain) {
+		public Builder setNoMetaObjectOverride() {
+			this.addMetaObjectOverride = false;
+			return this;
+		}
+
+		public UnaryOperator<TypedValue> build(TypeDomain domain) {
 			for (IGenericOperation op : operations.values())
 				op.validate(domain);
 
-			return new TypedUnaryOperator(id, precendence, operations, defaultOperation, domain);
+			final Logic logic = new Logic(id, operations, defaultOperation, domain);
+
+			return addMetaObjectOverride? new Meta(id, precendence, logic) : new NonMeta(id, precendence, logic);
 		}
 	}
 
-	public TypedUnaryOperator(String id, int precedence, Map<Class<?>, IGenericOperation> operations, IDefaultOperation defaultOperation, TypeDomain domain) {
-		super(id, precedence);
-		this.operations = ImmutableMap.copyOf(operations);
-		this.defaultOperation = defaultOperation;
-		this.domain = domain;
-	}
+	private static class Logic {
 
-	private final Map<Class<?>, IGenericOperation> operations;
+		private final String id;
 
-	private final IDefaultOperation defaultOperation;
+		private final Map<Class<?>, IGenericOperation> operations;
 
-	private final TypeDomain domain;
+		private final IDefaultOperation defaultOperation;
 
-	public interface IDefaultOperation {
-		public Optional<TypedValue> apply(TypeDomain domain, TypedValue value);
-	}
+		private final TypeDomain domain;
 
-	@Override
-	public TypedValue execute(TypedValue value) {
-		Preconditions.checkState(value.domain == this.domain, "Value belongs to different domain: %s", value);
-		final IGenericOperation op = operations.get(value.type);
-		if (op != null) return op.apply(value.domain, value);
-
-		if (defaultOperation != null) {
-			final Optional<TypedValue> result = defaultOperation.apply(value.domain, value);
-			if (result.isPresent()) return result.get();
+		public Logic(String id, Map<Class<?>, IGenericOperation> operations, IDefaultOperation defaultOperation, TypeDomain domain) {
+			this.id = id;
+			this.operations = ImmutableMap.copyOf(operations);
+			this.defaultOperation = defaultOperation;
+			this.domain = domain;
 		}
 
-		throw new IllegalArgumentException(String.format("Can't apply operation '%s' on value %s", id, value));
+		public TypedValue execute(TypedValue value) {
+			Preconditions.checkState(value.domain == this.domain, "Value belongs to different domain: %s", value);
+			final IGenericOperation op = operations.get(value.type);
+			if (op != null) return op.apply(value.domain, value);
+
+			if (defaultOperation != null) {
+				final Optional<TypedValue> result = defaultOperation.apply(value.domain, value);
+				if (result.isPresent()) return result.get();
+			}
+
+			throw new IllegalArgumentException(String.format("Can't apply operation '%s' on value %s", id, value));
+		}
+	}
+
+	private static class Meta extends UnaryOperator.StackBased<TypedValue> {
+		private final Logic logic;
+
+		public Meta(String id, int precedence, Logic logic) {
+			super(id, precedence);
+			this.logic = logic;
+		}
+
+		@Override
+		public void executeOnStack(Frame<TypedValue> frame) {
+			final Stack<TypedValue> stack = frame.stack();
+			final TypedValue value = stack.pop();
+
+			final SlotUnaryOp slotUnaryOp = value.getMetaObject().slotsUnaryOps.get(id);
+			final TypedValue result;
+			if (slotUnaryOp != null) {
+				result = slotUnaryOp.op(value, frame);
+			} else {
+				result = logic.execute(value);
+			}
+
+			stack.push(result);
+		}
+	}
+
+	private static class NonMeta extends UnaryOperator.Direct<TypedValue> {
+		private final Logic logic;
+
+		public NonMeta(String id, int precendence, Logic logic) {
+			super(id, precendence);
+			this.logic = logic;
+		}
+
+		@Override
+		public TypedValue execute(TypedValue value) {
+			return logic.execute(value);
+		}
 	}
 }

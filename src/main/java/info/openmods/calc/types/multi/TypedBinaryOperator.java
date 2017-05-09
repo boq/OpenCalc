@@ -8,15 +8,18 @@ import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
+import info.openmods.calc.Frame;
 import info.openmods.calc.executable.BinaryOperator;
 import info.openmods.calc.parsing.ast.OperatorAssociativity;
+import info.openmods.calc.types.multi.MetaObject.SlotBinaryOp;
 import info.openmods.calc.types.multi.TypeDomain.Coercion;
+import info.openmods.calc.utils.Stack;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
 import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
-public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
+public class TypedBinaryOperator {
 
 	public interface ICoercedOperation<T> {
 		public TypedValue apply(TypeDomain domain, T left, T right);
@@ -87,6 +90,8 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 		private final Table<Class<?>, Class<?>, IGenericOperation> variantOperations = HashBasedTable.create();
 
 		private IDefaultOperation defaultOperation;
+
+		private boolean addMetaObjectOverride = true;
 
 		public Builder(String id, int precedence, OperatorAssociativity associativity) {
 			this.id = id;
@@ -235,59 +240,109 @@ public class TypedBinaryOperator extends BinaryOperator.Direct<TypedValue> {
 			return this;
 		}
 
-		public TypedBinaryOperator build(TypeDomain domain) {
+		public Builder setNoMetaObjectOverride() {
+			this.addMetaObjectOverride = false;
+			return this;
+		}
+
+		public BinaryOperator<TypedValue> build(TypeDomain domain) {
 			for (IGenericOperation op : coercedOperations.values())
 				op.validate(domain);
 
 			for (IGenericOperation op : variantOperations.values())
 				op.validate(domain);
 
-			return new TypedBinaryOperator(id, precedence, associativity, domain, coercedOperations, variantOperations, defaultOperation);
+			final Logic logic = new Logic(id, domain, coercedOperations, variantOperations, defaultOperation);
+
+			return addMetaObjectOverride? new Meta(id, precedence, associativity, logic) : new NonMeta(id, precedence, associativity, logic);
 		}
 	}
 
-	private final Map<Class<?>, IGenericOperation> coercedOperations;
+	private static class Logic {
+		private final String id;
 
-	private final Table<Class<?>, Class<?>, IGenericOperation> variantOperations;
+		private final Map<Class<?>, IGenericOperation> coercedOperations;
 
-	private final IDefaultOperation defaultOperation;
+		private final Table<Class<?>, Class<?>, IGenericOperation> variantOperations;
 
-	private final TypeDomain domain;
+		private final IDefaultOperation defaultOperation;
 
-	private TypedBinaryOperator(String id, int precedence, OperatorAssociativity associativity,
-			TypeDomain domain,
-			Map<Class<?>, IGenericOperation> coercedOperations,
-			Table<Class<?>, Class<?>, IGenericOperation> variantOperations,
-			IDefaultOperation defaultOperation) {
-		super(id, precedence, associativity);
-		this.coercedOperations = ImmutableMap.copyOf(coercedOperations);
-		this.variantOperations = ImmutableTable.copyOf(variantOperations);
-		this.defaultOperation = defaultOperation;
-		this.domain = domain;
+		private final TypeDomain domain;
+
+		private Logic(String id,
+				TypeDomain domain,
+				Map<Class<?>, IGenericOperation> coercedOperations,
+				Table<Class<?>, Class<?>, IGenericOperation> variantOperations,
+				IDefaultOperation defaultOperation) {
+			this.id = id;
+			this.coercedOperations = ImmutableMap.copyOf(coercedOperations);
+			this.variantOperations = ImmutableTable.copyOf(variantOperations);
+			this.defaultOperation = defaultOperation;
+			this.domain = domain;
+		}
+
+		private TypedValue execute(TypedValue left, TypedValue right) {
+			Preconditions.checkArgument(left.domain == this.domain, "Left argument belongs to different domain: %s", left);
+			Preconditions.checkArgument(right.domain == this.domain, "Right argument belongs different domain: %s", right);
+
+			final Coercion coercionRule = domain.getCoercionRule(left.type, right.type);
+			if (coercionRule == Coercion.TO_LEFT) {
+				final IGenericOperation op = coercedOperations.get(left.type);
+				if (op != null) return op.apply(domain, left, right);
+			} else if (coercionRule == Coercion.TO_RIGHT) {
+				final IGenericOperation op = coercedOperations.get(right.type);
+				if (op != null) return op.apply(domain, left, right);
+			}
+
+			final IGenericOperation op = variantOperations.get(left.type, right.type);
+			if (op != null) return op.apply(domain, left, right);
+
+			if (defaultOperation != null) {
+				final Optional<TypedValue> result = defaultOperation.apply(domain, left, right);
+				if (result.isPresent()) return result.get();
+			}
+
+			throw new IllegalArgumentException(String.format("Can't apply operation '%s' on values %s,%s", id, left, right));
+		}
 	}
 
-	@Override
-	public TypedValue execute(TypedValue left, TypedValue right) {
-		Preconditions.checkArgument(left.domain == this.domain, "Left argument belongs to different domain: %s", left);
-		Preconditions.checkArgument(right.domain == this.domain, "Right argument belongs different domain: %s", right);
+	private static class Meta extends BinaryOperator.StackBased<TypedValue> {
+		private final Logic logic;
 
-		final Coercion coercionRule = domain.getCoercionRule(left.type, right.type);
-		if (coercionRule == Coercion.TO_LEFT) {
-			final IGenericOperation op = coercedOperations.get(left.type);
-			if (op != null) return op.apply(domain, left, right);
-		} else if (coercionRule == Coercion.TO_RIGHT) {
-			final IGenericOperation op = coercedOperations.get(right.type);
-			if (op != null) return op.apply(domain, left, right);
+		public Meta(String id, int precedence, OperatorAssociativity associativity, Logic logic) {
+			super(id, precedence, associativity);
+			this.logic = logic;
 		}
 
-		final IGenericOperation op = variantOperations.get(left.type, right.type);
-		if (op != null) return op.apply(domain, left, right);
+		@Override
+		public void executeOnStack(Frame<TypedValue> frame) {
+			final Stack<TypedValue> stack = frame.stack();
+			final TypedValue right = stack.pop();
+			final TypedValue left = stack.pop();
 
-		if (defaultOperation != null) {
-			final Optional<TypedValue> result = defaultOperation.apply(domain, left, right);
-			if (result.isPresent()) return result.get();
+			final SlotBinaryOp slotBinaryOp = left.getMetaObject().slotsBinaryOps.get(id);
+			final TypedValue result;
+			if (slotBinaryOp != null) {
+				result = slotBinaryOp.op(left, right, frame);
+			} else {
+				result = logic.execute(left, right);
+			}
+
+			stack.push(result);
+		}
+	}
+
+	private static class NonMeta extends BinaryOperator.Direct<TypedValue> {
+		private final Logic logic;
+
+		public NonMeta(String id, int precedence, OperatorAssociativity associativity, Logic logic) {
+			super(id, precedence, associativity);
+			this.logic = logic;
 		}
 
-		throw new IllegalArgumentException(String.format("Can't apply operation '%s' on values %s,%s", id, left, right));
+		@Override
+		public TypedValue execute(TypedValue left, TypedValue right) {
+			return logic.execute(left, right);
+		}
 	}
 }

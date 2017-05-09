@@ -2,6 +2,7 @@ package info.openmods.calc;
 
 import com.google.common.base.Optional;
 import info.openmods.calc.executable.UnaryOperator;
+import info.openmods.calc.types.multi.MetaObject;
 import info.openmods.calc.types.multi.TypeDomain;
 import info.openmods.calc.types.multi.TypedUnaryOperator;
 import info.openmods.calc.types.multi.TypedUnaryOperator.IOperation;
@@ -35,7 +36,7 @@ public class TypedUnaryOperatorTest {
 		domain.registerType(Boolean.class);
 
 		final int precedence = 4;
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", precedence)
+		final UnaryOperator<TypedValue> op = new TypedUnaryOperator.Builder("*", precedence)
 				.registerOperation(new IOperation<Integer>() {
 					@Override
 					public TypedValue apply(TypeDomain domain, Integer value) {
@@ -69,7 +70,7 @@ public class TypedUnaryOperatorTest {
 		domain.registerType(Integer.class);
 		domain.registerType(Boolean.class);
 
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", 0)
+		final UnaryOperator<TypedValue> op = new TypedUnaryOperator.Builder("*", 0)
 				.registerOperation(new ISimpleOperation<Integer, Boolean>() {
 					@Override
 					public Boolean apply(Integer value) {
@@ -90,12 +91,76 @@ public class TypedUnaryOperatorTest {
 
 		final TypedValue value = domain.create(Integer.class, 2);
 
-		final TypedUnaryOperator op = new TypedUnaryOperator.Builder("*", 0)
+		final UnaryOperator<TypedValue> op = new TypedUnaryOperator.Builder("*", 0)
 				.setDefaultOperation(new TypedUnaryOperator.IDefaultOperation() {
 					@Override
 					public Optional<TypedValue> apply(TypeDomain domain, TypedValue v) {
 						Assert.assertEquals(v, value);
 						return Optional.of(domain.create(Boolean.class, Boolean.TRUE));
+					}
+				})
+				.build(domain);
+
+		final TypedValue result = execute(op, value);
+		assertValueEquals(result, domain, Boolean.class, Boolean.TRUE);
+	}
+
+	@Test
+	public void testMetaObjectAccepting() {
+		final TypeDomain domain = new TypeDomain();
+		domain.registerType(Integer.class);
+		domain.registerType(Boolean.class);
+
+		final MetaObject mo = MetaObject.builder()
+				.set("*", new MetaObject.SlotUnaryOp() {
+					@Override
+					public TypedValue op(TypedValue self, Frame<TypedValue> frame) {
+						assertValueEquals(self, domain, Integer.class, 2);
+						return domain.create(Boolean.class, Boolean.TRUE);
+					}
+				})
+				.build();
+
+		final TypedValue value = domain.create(Integer.class, 2, mo);
+
+		final UnaryOperator<TypedValue> op = new TypedUnaryOperator.Builder("*", 0)
+				.setDefaultOperation(new TypedUnaryOperator.IDefaultOperation() {
+					@Override
+					public Optional<TypedValue> apply(TypeDomain domain, TypedValue v) {
+						throw new AssertionError("Invalid function called");
+					}
+				})
+				.build(domain);
+
+		final TypedValue result = execute(op, value);
+		assertValueEquals(result, domain, Boolean.class, Boolean.TRUE);
+	}
+
+	@Test
+	public void testMetaObjectIgnoring() {
+		final TypeDomain domain = new TypeDomain();
+		domain.registerType(Integer.class);
+		domain.registerType(Boolean.class);
+
+		final MetaObject mo = MetaObject.builder()
+				.set("*", new MetaObject.SlotUnaryOp() {
+					@Override
+					public TypedValue op(TypedValue self, Frame<TypedValue> frame) {
+						throw new AssertionError("Invalid function called");
+					}
+				})
+				.build();
+
+		final TypedValue value = domain.create(Integer.class, 2, mo);
+
+		final UnaryOperator<TypedValue> op = new TypedUnaryOperator.Builder("*", 0)
+				.setNoMetaObjectOverride()
+				.setDefaultOperation(new TypedUnaryOperator.IDefaultOperation() {
+					@Override
+					public Optional<TypedValue> apply(TypeDomain domain, TypedValue v) {
+						assertValueEquals(v, domain, Integer.class, 2);
+						return Optional.of(domain.create(Boolean.class, Boolean.TRUE));
+
 					}
 				})
 				.build(domain);

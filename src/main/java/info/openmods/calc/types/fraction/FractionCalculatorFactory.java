@@ -13,7 +13,7 @@ import info.openmods.calc.executable.UnaryOperator;
 import info.openmods.calc.parsing.BasicCompilerMapFactory;
 import info.openmods.calc.parsing.CommonSimpleSymbolFactory;
 import info.openmods.calc.parsing.IValueParser;
-import info.openmods.calc.symbol.GenericFunctions.AccumulatorFunction;
+import info.openmods.calc.symbol.GenericFunctions.DirectAccumulatorFunction;
 import info.openmods.calc.symbol.NullaryFunction;
 import info.openmods.calc.symbol.UnaryFunction;
 import java.util.Random;
@@ -99,28 +99,28 @@ public class FractionCalculatorFactory<M> extends SimpleCalculatorFactory<Fracti
 			}
 		});
 
-		env.setGlobalSymbol("min", new AccumulatorFunction<Fraction>(NULL_VALUE) {
+		env.setGlobalSymbol("min", new DirectAccumulatorFunction<Fraction>(NULL_VALUE) {
 			@Override
 			protected Fraction accumulate(Fraction result, Fraction value) {
 				return Ordering.natural().min(result, value);
 			}
 		});
 
-		env.setGlobalSymbol("max", new AccumulatorFunction<Fraction>(NULL_VALUE) {
+		env.setGlobalSymbol("max", new DirectAccumulatorFunction<Fraction>(NULL_VALUE) {
 			@Override
 			protected Fraction accumulate(Fraction result, Fraction value) {
 				return Ordering.natural().max(result, value);
 			}
 		});
 
-		env.setGlobalSymbol("sum", new AccumulatorFunction<Fraction>(NULL_VALUE) {
+		env.setGlobalSymbol("sum", new DirectAccumulatorFunction<Fraction>(NULL_VALUE) {
 			@Override
 			protected Fraction accumulate(Fraction result, Fraction value) {
 				return result.add(value);
 			}
 		});
 
-		env.setGlobalSymbol("avg", new AccumulatorFunction<Fraction>(NULL_VALUE) {
+		env.setGlobalSymbol("avg", new DirectAccumulatorFunction<Fraction>(NULL_VALUE) {
 			@Override
 			protected Fraction accumulate(Fraction result, Fraction value) {
 				return result.add(value);

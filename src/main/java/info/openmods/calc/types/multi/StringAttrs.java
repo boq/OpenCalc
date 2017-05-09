@@ -140,6 +140,13 @@ public class StringAttrs {
 				return domain.create(BigInteger.class, BigInteger.valueOf(value.codePointAt(0)));
 			}
 		});
+
+		attrs.put("reverse", new StringAttr() {
+			@Override
+			public TypedValue get(TypeDomain domain, String value) {
+				return domain.create(String.class, StringUtils.reverse(value));
+			}
+		});
 	}
 
 	private static TypedValue toList(TypedValue nullValue, Iterable<String> parts) {
