@@ -3,6 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven'
+    id 'org.ajoberstar.grgit' version '1.7.1'
 }
 
 sourceCompatibility = 1.6
@@ -25,6 +26,40 @@ dependencies {
     testCompile "org.mockito:mockito-core:2.8.9"
 }
 
+def env = System.getenv()
+def repo = org.ajoberstar.grgit.Grgit.open('.')
+
+def timestamp(Date date) {
+    TimeZone tz = TimeZone.getTimeZone("UTC");
+    java.text.DateFormat df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
+    df.setTimeZone(tz);
+    return df.format(date);
+}
+
+def mf = manifest {
+    if (env.BUILD_TAG != null) { // If this works, we'll assume we're in Jenkins atleast.
+        attributes("Jenkins-Build": "true",
+                   "Jenkins-Tag": env.BUILD_TAG,
+                   "Jenkins-ID": env.BUILD_ID)
+    } else {
+        attributes("Jenkins-Build": "false")
+    }
+
+    attributes(
+        "Built-Date": timestamp(new Date()),
+        "Build-Java-Version": System.properties['java.version'],
+        "Build-Java-Vendor": System.properties['java.vendor'],
+        "Git-Branch": repo.branch.getCurrent().getName(),
+        "Git-Hash": repo.head().getAbbreviatedId(8),
+    )
+}
+
+jar {
+    manifest {
+        from mf
+    }
+}
+
 task wrapper (type: Wrapper) {
     gradleVersion = "2.12"
 }
@@ -32,6 +67,10 @@ task wrapper (type: Wrapper) {
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.java
+
+    manifest {
+        from mf
+    }
 }
 
 artifacts {
@@ -50,7 +89,7 @@ uploadArchives {
             groupId = "info.openmods"
             version = version
             artifactId = ARTIFACT_NAME
-            
+
             project {
                 name ARTIFACT_NAME
                 packaging 'jar'
