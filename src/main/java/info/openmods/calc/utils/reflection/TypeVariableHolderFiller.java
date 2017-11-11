@@ -1,7 +1,6 @@
 package info.openmods.calc.utils.reflection;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -70,17 +69,18 @@ public class TypeVariableHolderFiller {
 	private final Map<Class<?>, Map<String, TypeVariable<?>>> sourceCache = Maps.newHashMap();
 
 	private void fillField(Field targetField, Class<?> sourceClass) {
+
+		final Map<String, TypeVariable<?>> sourceVariables = getSourceTypeVariables(sourceClass);
+
+		final String variableName = targetField.getName();
+		final TypeVariable<?> sourceTypeVariable = sourceVariables.get(variableName);
+		Preconditions.checkState(sourceTypeVariable != null, "Can't find type variable '%s' in class '%s", variableName, sourceClass);
+
+		targetField.setAccessible(true);
 		try {
-			final Map<String, TypeVariable<?>> sourceVariables = getSourceTypeVariables(sourceClass);
-
-			final String variableName = targetField.getName();
-			final TypeVariable<?> sourceTypeVariable = sourceVariables.get(variableName);
-			Preconditions.checkState(sourceTypeVariable != null, "Can't find type variable '%s' in class '%s", variableName, sourceClass);
-
-			targetField.setAccessible(true);
 			targetField.set(null, sourceTypeVariable);
-		} catch (Exception e) {
-			throw Throwables.propagate(e);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

@@ -1,6 +1,5 @@
 package info.openmods.calc.types.multi;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -210,13 +209,7 @@ public class StringInterpolate {
 		public StringInterpolateExecutable(TypeDomain domain, IValuePrinter<TypedValue> printer, String template) {
 			this.domain = domain;
 			this.printer = printer;
-			this.parts = ImmutableList.copyOf(Iterables.transform(parseTemplate(template),
-					new Function<TemplatePartInfo, ITemplatePart>() {
-						@Override
-						public ITemplatePart apply(TemplatePartInfo input) {
-							return input.createPart();
-						}
-					}));
+			this.parts = ImmutableList.copyOf(Iterables.transform(parseTemplate(template), TemplatePartInfo::createPart));
 		}
 
 		@Override

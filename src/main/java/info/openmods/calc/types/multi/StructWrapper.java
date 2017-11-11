@@ -2,7 +2,6 @@ package info.openmods.calc.types.multi;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -18,6 +17,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Map;
@@ -126,11 +126,11 @@ public class StructWrapper {
 			@SuppressWarnings("unchecked")
 			private <T> TypedValue wrapMethodValue(Method m, TypeDomain domain, Object target) {
 				try {
-					final T value = (T)m.invoke(target);
+					T value = (T)m.invoke(target);
 					final Class<T> cls = (Class<T>)m.getReturnType();
 					return domain.create(cls, value);
-				} catch (Exception e) {
-					throw Throwables.propagate(e);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					throw new RuntimeException(e);
 				}
 			}
 		});
@@ -146,8 +146,8 @@ public class StructWrapper {
 			public TypedValue getValue(TypeDomain domain, Object target) {
 				try {
 					return (TypedValue)m.invoke(target);
-				} catch (Exception e) {
-					throw Throwables.propagate(e);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					throw new RuntimeException(e);
 				}
 			}
 		});

@@ -60,6 +60,11 @@ public abstract class OptionalInt {
 		public OptionalInt map(IntFunction function) {
 			return new Present(function.apply(value));
 		}
+
+		@Override
+		public Integer asNullable() {
+			return value;
+		}
 	}
 
 	private static class Absent extends OptionalInt {
@@ -94,6 +99,11 @@ public abstract class OptionalInt {
 			return this;
 		}
 
+		@Override
+		public Integer asNullable() {
+			return null;
+		}
+
 	}
 
 	private OptionalInt() {}
@@ -105,6 +115,8 @@ public abstract class OptionalInt {
 	public abstract int or(int defaultValue);
 
 	public abstract boolean compareIfPresent(int value);
+
+	public abstract Integer asNullable();
 
 	public interface IntFunction {
 		public int apply(int value);

@@ -1,7 +1,6 @@
 package info.openmods.calc.types.multi;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -16,6 +15,7 @@ import info.openmods.calc.utils.OptionalInt;
 import info.openmods.calc.utils.reflection.TypeVariableHolder;
 import info.openmods.calc.utils.reflection.TypeVariableHolderFiller;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.TypeVariable;
 import java.util.Locale;
@@ -81,8 +81,8 @@ public class MetaObjectInfo {
 		public boolean checkIsPresent(MetaObject mo) {
 			try {
 				return field.get(mo) != null;
-			} catch (Exception e) {
-				throw Throwables.propagate(e);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
@@ -100,8 +100,8 @@ public class MetaObjectInfo {
 		public Slot get(MetaObject mo) {
 			try {
 				return (Slot)field.get(mo);
-			} catch (Exception e) {
-				throw Throwables.propagate(e);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
@@ -109,8 +109,8 @@ public class MetaObjectInfo {
 		public void set(MetaObject.Builder builder, Slot slot) {
 			try {
 				builderMethod.invoke(builder, slot);
-			} catch (Exception e) {
-				throw Throwables.propagate(e);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				throw new RuntimeException(e);
 			}
 		}
 	}
@@ -159,8 +159,8 @@ public class MetaObjectInfo {
 			public boolean checkIsPresent(MetaObject mo) {
 				try {
 					return getMap(mo).containsKey(key);
-				} catch (Exception e) {
-					throw Throwables.propagate(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
 				}
 			}
 
@@ -178,8 +178,8 @@ public class MetaObjectInfo {
 			public Slot get(MetaObject mo) {
 				try {
 					return getMap(mo).get(key);
-				} catch (Exception e) {
-					throw Throwables.propagate(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
 				}
 			}
 
@@ -187,8 +187,8 @@ public class MetaObjectInfo {
 			public void set(MetaObject.Builder builder, Slot slot) {
 				try {
 					builderMethod.invoke(builder, key, slot);
-				} catch (Exception e) {
-					throw Throwables.propagate(e);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					throw new RuntimeException(e);
 				}
 			}
 		}
@@ -263,11 +263,11 @@ public class MetaObjectInfo {
 		final Class<?> slotAdapterTarget = TypeToken.of(adapterCls).resolveType(TypeVariableHolders.SlotAdapterVars.T).getRawType();
 		Preconditions.checkState(slotAdapterTarget == slotCls, "Invalid slot adapter type: expected %s, got %s", slotCls, slotAdapterTarget);
 		try {
-
 			return (SlotAdapter<Slot>)adapterCls.newInstance();
-		} catch (Exception e) {
-			throw Throwables.propagate(e);
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new RuntimeException(e);
 		}
+
 	}
 
 }

@@ -150,6 +150,7 @@ public class CalcTestUtils {
 			this.sut = sut;
 		}
 
+		@SuppressWarnings("unchecked")
 		public StackCheck<E> expectStack(E... values) {
 			Assert.assertEquals(Arrays.asList(values), Lists.newArrayList(sut.environment.topFrame().stack()));
 			return this;
@@ -181,6 +182,7 @@ public class CalcTestUtils {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked")
 		public CalcCheck<E> expectResults(E... values) {
 			final Frame<E> frame = sut.environment.executeIsolated(expr);
 			Assert.assertEquals(Arrays.asList(values), Lists.newArrayList(frame.stack()));
@@ -265,6 +267,7 @@ public class CalcTestUtils {
 
 		private boolean allowGets = false;
 
+		@SuppressWarnings("unchecked")
 		public SymbolStub<E> expectArgs(E... args) {
 			expectedArgs = Lists.reverse(Arrays.asList(args));
 			return this;
@@ -275,6 +278,7 @@ public class CalcTestUtils {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked")
 		public SymbolStub<E> setReturns(E... rets) {
 			returns = Arrays.asList(rets);
 			return this;
@@ -350,6 +354,7 @@ public class CalcTestUtils {
 		private List<E> returns = Lists.newArrayList();
 		private boolean exactReturnCount = false;
 
+		@SuppressWarnings("unchecked")
 		public CallableStub<E> expectArgs(E... args) {
 			expectedArgs = Lists.reverse(Arrays.asList(args));
 			return this;
@@ -360,6 +365,7 @@ public class CalcTestUtils {
 			return this;
 		}
 
+		@SuppressWarnings("unchecked")
 		public CallableStub<E> setReturns(E... rets) {
 			returns = Arrays.asList(rets);
 			return this;

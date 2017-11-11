@@ -255,43 +255,23 @@ public class TypeDomain {
 
 	public <T> Function<T, TypedValue> createWrappingTransformer(final Class<T> type) {
 		checkIsKnownType(type);
-		return new Function<T, TypedValue>() {
-			@Override
-			public TypedValue apply(T input) {
-				return create(type, input);
-			}
-		};
+		return input -> create(type, input);
 	}
 
 	public <T> Function<T, TypedValue> createWrappingTransformer(final Class<T> type, final TypedValue nullValue) {
 		checkIsKnownType(type);
 		Preconditions.checkArgument(nullValue.domain == this, "Different domains");
-		return new Function<T, TypedValue>() {
-			@Override
-			public TypedValue apply(T input) {
-				return input != null? create(type, input) : nullValue;
-			}
-		};
+		return input -> input != null? create(type, input) : nullValue;
 	}
 
 	public <T> Function<TypedValue, T> createUnwrappingTransformer(final Class<T> type) {
 		checkIsKnownType(type);
-		return new Function<TypedValue, T>() {
-			@Override
-			public T apply(TypedValue input) {
-				return input.as(type);
-			}
-		};
+		return input -> input.as(type);
 	}
 
 	public <T> Function<TypedValue, T> createUnwrappingTransformer(final Class<T> type, final TypedValue nullValue) {
 		checkIsKnownType(type);
 		Preconditions.checkArgument(nullValue.domain == this, "Different domains");
-		return new Function<TypedValue, T>() {
-			@Override
-			public T apply(TypedValue input) {
-				return !nullValue.equals(input)? input.as(type) : null;
-			}
-		};
+		return input -> !nullValue.equals(input)? input.as(type) : null;
 	}
 }

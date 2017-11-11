@@ -81,12 +81,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class TypedValueCalculatorFactory {
-	private static final Function<BigInteger, Integer> INT_UNWRAP = new Function<BigInteger, Integer>() {
-		@Override
-		public Integer apply(BigInteger input) {
-			return input.intValue();
-		}
-	};
+	private static final Function<BigInteger, Integer> INT_UNWRAP = BigInteger::intValue;
 
 	private static final int PRIORITY_MAX = 185; // basically magic, i.e. .
 	private static final int PRIORITY_UNARY = 180; // unary

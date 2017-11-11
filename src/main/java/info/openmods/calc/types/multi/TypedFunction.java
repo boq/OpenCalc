@@ -1,6 +1,5 @@
 package info.openmods.calc.types.multi;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -131,12 +130,7 @@ public class TypedFunction {
 
 	public static class Builder {
 		// we want variants with "longer" dispatch list to be matched first
-		private static final Ordering<TypeVariant> VARIANT_ORDERING = Ordering.natural().reverse().onResultOf(new Function<TypeVariant, Integer>() {
-			@Override
-			public Integer apply(TypeVariant input) {
-				return input.lastDispatchArg;
-			}
-		});
+		private static final Ordering<TypeVariant> VARIANT_ORDERING = Ordering.natural().reverse().onResultOf(input ->  input.lastDispatchArg);
 
 		private static final DefaultMap<Set<Method>, TypedFunctionBody> bodyCache = new DefaultMap<Set<Method>, TypedFunctionBody>() {
 

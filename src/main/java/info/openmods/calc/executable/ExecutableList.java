@@ -13,6 +13,7 @@ public class ExecutableList<E> implements IExecutable<E> {
 		this.commands = ImmutableList.copyOf(commands);
 	}
 
+	@SafeVarargs
 	public ExecutableList(IExecutable<E>... commands) {
 		this.commands = ImmutableList.copyOf(commands);
 	}
